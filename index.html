@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лесная еда — калькулятор ингредиентов</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green-dark: #1B4332;
+  --green-mid: #2D6A4F;
+  --green-light: #95D5B2;
+  --green-pale: #D8F3DC;
+  --green-50: #EAF3DE;
+  --amber-50: #FAEEDA;
+  --amber-800: #854F0B;
+  --teal-50: #E1F5EE;
+  --teal-700: #0F6E56;
+  --blue-50: #E6F1FB;
+  --blue-700: #185FA5;
+  --coral-50: #FAECE7;
+  --coral-700: #993C1D;
+  --gray-100: #F5F4F0;
+  --gray-200: #E8E7E2;
+  --gray-400: #9A9890;
+  --text: #1a1a18;
+  --text-muted: #6b6b66;
+  --border: rgba(0,0,0,0.10);
+}
+body {
+  font-family: 'Georgia', serif;
+  background: #f7f5f0;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  background: var(--green-dark);
+  padding: 2rem 2rem 1.5rem;
+  color: white;
+}
+header h1 {
+  font-size: 1.75rem;
+  font-weight: normal;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+header p {
+  font-size: 0.875rem;
+  color: var(--green-light);
+  font-style: italic;
+}
+main {
+  flex: 1;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.field-label {
+  display: block;
+  font-size: 0.75rem;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.search-wrap { position: relative; }
+#dish-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font-size: 1rem;
+  font-family: 'Georgia', serif;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+#dish-input:focus { border-color: var(--green-mid); }
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+  display: none;
+}
+.dropdown.open { display: block; }
+.opt {
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--text);
+  border-bottom: 1px solid var(--gray-100);
+  font-family: 'Georgia', serif;
+}
+.opt:last-child { border-bottom: none; }
+.opt:hover, .opt.active { background: var(--green-pale); }
+.opt mark { background: none; color: var(--green-mid); font-weight: bold; font-style: normal; }
+.persons-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1.25rem;
+}
+.persons-row label {
+  font-size: 0.75rem;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.stepper { display: flex; align-items: center; gap: 6px; }
+.step-btn {
+  width: 38px; height: 38px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-btn:hover { background: var(--green-pale); border-color: var(--green-light); }
+#persons-input {
+  width: 72px; height: 38px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-family: 'Georgia', serif;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  outline: none;
+}
+#persons-input:focus { border-color: var(--green-mid); }
+.result { display: none; }
+.result.show { display: block; }
+.dish-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.dish-name {
+  font-size: 1.5rem;
+  font-weight: normal;
+  color: var(--green-dark);
+  letter-spacing: -0.02em;
+}
+.cat-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+.cat-Завтрак  { background: var(--green-50);  color: #3B6D11; }
+.cat-Перекус  { background: var(--amber-50);  color: var(--amber-800); }
+.cat-Салат    { background: var(--teal-50);   color: var(--teal-700); }
+.cat-Суп      { background: var(--blue-50);   color: var(--blue-700); }
+.cat-Второе   { background: var(--coral-50);  color: var(--coral-700); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+thead th {
+  font-family: sans-serif;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: normal;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1.5px solid var(--gray-200);
+}
+thead th:not(:first-child) { text-align: right; }
+tbody td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--gray-100);
+  color: var(--text);
+  vertical-align: middle;
+}
+tbody td:not(:first-child) { text-align: right; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) td { background: #fafaf8; }
+.qty {
+  font-weight: bold;
+  color: var(--green-dark);
+}
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 1rem;
+}
+footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-family: sans-serif;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+@media (max-width: 500px) {
+  header { padding: 1.5rem 1rem 1.25rem; }
+  header h1 { font-size: 1.4rem; }
+  main { padding: 1.25rem 1rem; }
+  .card { padding: 1.25rem 1rem; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Лесная еда</h1>
+  <p>Калькулятор ингредиентов по блюдам меню</p>
+</header>
+
+<main>
+  <div class="card">
+    <label class="field-label" for="dish-input">Название блюда</label>
+    <div class="search-wrap">
+      <input id="dish-input" type="text" placeholder="Начните вводить…" autocomplete="off" />
+      <div class="dropdown" id="dropdown"></div>
+    </div>
+
+    <div class="persons-row">
+      <label for="persons-input">Количество человек</label>
+      <div class="stepper">
+        <button class="step-btn" id="btn-minus">−</button>
+        <input id="persons-input" type="number" min="1" max="999" value="10" />
+        <button class="step-btn" id="btn-plus">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result card" id="result">
+    <div class="dish-header">
+      <div class="dish-name" id="res-name"></div>
+      <div class="cat-badge" id="res-badge"></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Ингредиент</th>
+          <th>На 1 чел.</th>
+          <th id="col-total">На 10 чел.</th>
+        </tr>
+      </thead>
+      <tbody id="ing-body"></tbody>
+    </table>
+  </div>
+
+  <div class="empty-state" id="empty-msg">Выберите блюдо, чтобы увидеть состав</div>
+</main>
+
+<footer>Лесная еда · меню на 10 человек · 14 дней</footer>
+
+<script>
+const DISHES = {
+  "Овсянка": { cat: "Завтрак", ing: [["Геркулес",60,"г"],["Молоко 3,2%",100,"мл"],["Вода",100,"мл"],["Сахар",7,"г"],["Соль",0.5,"г"],["Масло сливочное",5,"г"]]},
+  "Рисовая каша": { cat: "Завтрак", ing: [["Рис круглозёрный",70,"г"],["Молоко",100,"мл"],["Вода",150,"мл"],["Сахар",7,"г"],["Соль",0.5,"г"],["Масло сливочное",5,"г"]]},
+  "Гречневая каша с соусом": { cat: "Завтрак", ing: [["Гречка",70,"г"],["Лук",30,"г"],["Чеснок",3,"г"],["Томатная паста",10,"г"],["Масло растительное",5,"мл"],["Соль",1.5,"г"],["Вода",200,"мл"]]},
+  "Манная каша": { cat: "Завтрак", ing: [["Манка",50,"г"],["Молоко",100,"мл"],["Вода",150,"мл"],["Сахар",7,"г"],["Масло сливочное",7,"г"],["Соль",0.5,"г"]]},
+  "Фриттата": { cat: "Завтрак", ing: [["Яйца",2,"шт"],["Хлеб белый",70,"г"],["Томатная паста",17,"г"],["Лук",40,"г"],["Масло растительное",5,"мл"],["Соль",0.5,"г"],["Чеснок",3,"г"],["Плавленый сыр",20,"г"]]},
+  "Макароны с сыром": { cat: "Завтрак", ing: [["Макароны",90,"г"],["Плавленый сыр",40,"г"],["Вода",135,"мл"],["Соль",2,"г"],["Масло подсолнечное",7,"мл"],["Майонез",7,"г"],["Чеснок",4,"г"]]},
+  "Вареные яйца": { cat: "Завтрак", ing: [["Яйца",2,"шт"]]},
+  "Тортилья": { cat: "Завтрак", ing: [["Лук",25,"г"],["Картофель",150,"г"],["Яйца",1.5,"шт"],["Масло растительное",7,"мл"]]},
+  "Бутерброды с чечевичной намазкой": { cat: "Перекус", ing: [["Хлеб белый",80,"г"],["Чечевица красная",30,"г"],["Лук",30,"г"],["Чеснок",4,"г"],["Морковь",10,"г"],["Сметана 15%",20,"г"],["Вода",35,"мл"],["Масло растительное",5,"мл"]]},
+  "Бутерброды с морковной намазкой": { cat: "Перекус", ing: [["Хлеб белый",80,"г"],["Чеснок",3,"г"],["Морковь",70,"г"],["Майонез",20,"г"],["Соль",1,"г"]]},
+  "Бутерброды с яичным салатом": { cat: "Перекус", ing: [["Хлеб белый",80,"г"],["Чеснок",3,"г"],["Майонез",20,"г"],["Яйца",1,"шт"],["Соль",1,"г"],["Зелень",5,"г"]]},
+  "Бутерброды с плавленым сыром и огурцом": { cat: "Перекус", ing: [["Хлеб белый",80,"г"],["Плавленый сыр",40,"г"],["Огурцы свежие",100,"г"],["Соль",1,"г"]]},
+  "Бутерброды с рыбным салатом": { cat: "Перекус", ing: [["Хлеб белый",80,"г"],["Лук",15,"г"],["Майонез",15,"г"],["Консервы рыбные",60,"г"],["Яйца",1,"шт"],["Соль",0.5,"г"],["Зелень",5,"г"]]},
+  "Овсяные оладьи": { cat: "Перекус", ing: [["Геркулес",60,"г"],["Яйца",0.5,"шт"],["Сахар",12,"г"],["Сода",1,"г"],["Соль",0.5,"г"],["Молоко",80,"мл"],["Ванилин",0.1,"г"],["Масло растительное",15,"мл"]]},
+  "Кабачковые оладьи": { cat: "Перекус", ing: [["Мука",30,"г"],["Кабачки",250,"г"],["Яйца",0.7,"шт"],["Сода",1,"г"],["Соль",0.5,"г"],["Масло растительное",15,"мл"],["Лук",30,"г"]]},
+  "Кутабы с брынзой и зеленью": { cat: "Перекус", ing: [["Мука",70,"г"],["Вода тёплая",25,"мл"],["Соль",0.5,"г"],["Масло растительное",5,"мл"],["Брынза",50,"г"],["Зелень",10,"г"],["Чеснок",1,"г"]]},
+  "Слоу": { cat: "Салат", ing: [["Капуста белокочанная",60,"г"],["Капуста красная",60,"г"],["Морковь",30,"г"],["Майонез",10,"г"]]},
+  "Салат с дайконом": { cat: "Салат", ing: [["Дайкон",100,"г"],["Морковь",50,"г"],["Масло растительное",7,"мл"],["Уксус рисовый",2,"мл"],["Соль",0.5,"г"]]},
+  "Красная капуста маринованная": { cat: "Салат", ing: [["Капуста белокочанная",100,"г"],["Свёкла",20,"г"],["Соль",1,"г"],["Сахар",1,"г"],["Уксус",5,"мл"]]},
+  "Куриный суп": { cat: "Суп", ing: [["Курица",100,"г"],["Картофель",100,"г"],["Морковь",40,"г"],["Лук",30,"г"],["Чеснок",3,"г"],["Томатная паста",5,"г"],["Масло растительное",7.5,"мл"],["Соль",2,"г"],["Перец чёрный",1,"г"],["Приправа итальянская",1,"г"],["Паприка",1,"г"],["Вода",400,"мл"]]},
+  "Щи с курицей": { cat: "Суп", ing: [["Курица",100,"г"],["Капуста",100,"г"],["Морковь",40,"г"],["Лук",40,"г"],["Чеснок",4,"г"],["Томатная паста",10,"г"],["Масло растительное",7.5,"мл"],["Соль",2,"г"],["Перец чёрный",1,"г"],["Вода",400,"мл"]]},
+  "Солянка": { cat: "Суп", ing: [["Свинина",100,"г"],["Оливки",25,"г"],["Копчёности",50,"г"],["Морковь",50,"г"],["Лук",50,"г"],["Чеснок",5,"г"],["Вода",400,"мл"],["Соль",2,"г"],["Перец чёрный",1,"г"],["Огурцы солёные",20,"г"],["Томатная паста",15,"г"],["Масло растительное",7.5,"мл"]]},
+  "Рыбный суп": { cat: "Суп", ing: [["Картофель",120,"г"],["Консервы рыбные",90,"г"],["Морковь",40,"г"],["Лук",40,"г"],["Чеснок",4,"г"],["Плавленый сыр",30,"г"],["Лимон",5,"г"],["Перец чёрный",1,"г"],["Соль",2,"г"],["Вода",400,"мл"]]},
+  "Борщ": { cat: "Суп", ing: [["Картофель",120,"г"],["Свёкла",70,"г"],["Капуста",100,"г"],["Морковь",40,"г"],["Лук",40,"г"],["Чеснок",4,"г"],["Перец чёрный",1,"г"],["Соль",2,"г"],["Вода",450,"мл"],["Свинина",80,"г"],["Томатная паста",25,"г"]]},
+  "Луково-сырный суп": { cat: "Суп", ing: [["Лук",120,"г"],["Плавленый сыр",40,"г"],["Мука",12,"г"],["Масло сливочное",10,"г"],["Масло подсолнечное",5,"мл"],["Приправа итальянская",2,"г"],["Соль",1,"г"],["Вода",400,"мл"]]},
+  "Бобовый суп с копчёностями": { cat: "Суп", ing: [["Фасоль",70,"г"],["Лук",50,"г"],["Морковь",40,"г"],["Томатная паста",25,"г"],["Копчёности",50,"г"],["Чеснок",4,"г"],["Соль",2,"г"],["Вода",400,"мл"],["Паприка",1,"г"],["Масло растительное",7.5,"мл"]]},
+  "Томатный суп с макаронами": { cat: "Суп", ing: [["Макароны",50,"г"],["Лук",50,"г"],["Томатная паста",30,"г"],["Приправа итальянская",3,"г"],["Чеснок",4,"г"],["Соль",2,"г"],["Вода",450,"мл"],["Паприка",1,"г"],["Лимон",10,"г"],["Масло растительное",10,"мл"]]},
+  "Грибной суп": { cat: "Суп", ing: [["Грибы",70,"г"],["Лук",50,"г"],["Морковь",40,"г"],["Картофель",120,"г"],["Чеснок",4,"г"],["Соль",2,"г"],["Вода",400,"мл"],["Масло растительное",10,"мл"]]},
+  "Тушёная капуста с копчёностями": { cat: "Второе", ing: [["Капуста",500,"г"],["Лук",60,"г"],["Соевый соус",30,"мл"],["Томатная паста",25,"г"],["Копчёности",80,"г"],["Перец чёрный",1,"г"],["Паприка",1,"г"],["Чеснок",7,"г"]]},
+  "Макароны с фаршем": { cat: "Второе", ing: [["Макароны",100,"г"],["Фарш",90,"г"],["Лук",40,"г"],["Чеснок",5,"г"],["Плавленый сыр",30,"г"],["Перец чёрный",1,"г"],["Паприка",1,"г"],["Приправа итальянская",1,"г"],["Вода",250,"мл"]]},
+  "Варёная картошка с селёдкой": { cat: "Второе", ing: [["Картофель",350,"г"],["Лук",30,"г"],["Огурцы солёные",70,"г"],["Селёдка филе",100,"г"],["Масло сливочное",15,"г"],["Зелень",10,"г"]]},
+  "Рис с курицей": { cat: "Второе", ing: [["Рис",90,"г"],["Курица бедро/филе",110,"г"],["Лук",40,"г"],["Морковь",50,"г"],["Масло растительное",8,"мл"],["Чеснок",5,"г"],["Перец чёрный",1,"г"],["Соль",2,"г"],["Вода",200,"мл"]]},
+  "Курица с фасолью": { cat: "Второе", ing: [["Курица бедро/филе",100,"г"],["Фасоль",60,"г"],["Томатная паста",20,"г"],["Лук",40,"г"],["Чеснок",4,"г"],["Масло растительное",10,"мл"],["Вода",300,"мл"],["Соль",2,"г"],["Перец чёрный",1,"г"],["Паприка",1,"г"]]},
+  "Гречка с мясным соусом": { cat: "Второе", ing: [["Гречка",90,"г"],["Томатная паста",25,"г"],["Фарш",100,"г"],["Лук",40,"г"],["Чеснок",4,"г"],["Морковь",40,"г"],["Соль",2,"г"],["Паприка",1,"г"],["Перец чёрный",1,"г"],["Приправа итальянская",2,"г"],["Вода",250,"мл"]]},
+  "Шурпа": { cat: "Второе", ing: [["Курица",120,"г"],["Картофель",250,"г"],["Морковь",60,"г"],["Лук",50,"г"],["Вода",300,"мл"],["Зелень",15,"г"],["Соль",2,"г"],["Перец зелёный",40,"г"],["Масло растительное",4,"мл"]]}
+};
+
+const names = Object.keys(DISHES);
+const input = document.getElementById('dish-input');
+const dropdown = document.getElementById('dropdown');
+const personsInput = document.getElementById('persons-input');
+const result = document.getElementById('result');
+const emptyMsg = document.getElementById('empty-msg');
+const ingBody = document.getElementById('ing-body');
+const resName = document.getElementById('res-name');
+const resBadge = document.getElementById('res-badge');
+const colTotal = document.getElementById('col-total');
+let selectedDish = null;
+let activeIdx = -1;
+let filteredNames = [];
+
+function fmt(val, unit) {
+  if (unit === 'шт') {
+    const r = Math.round(val * 10) / 10;
+    return (r % 1 === 0 ? r.toFixed(0) : r.toFixed(1)) + '\u00a0шт';
+  }
+  return Math.round(val) + '\u00a0' + unit;
+}
+
+function render() {
+  if (!selectedDish) { result.classList.remove('show'); emptyMsg.style.display = ''; return; }
+  const n = Math.max(1, parseInt(personsInput.value) || 1);
+  const dish = DISHES[selectedDish];
+  resName.textContent = selectedDish;
+  resBadge.textContent = dish.cat;
+  resBadge.className = 'cat-badge cat-' + dish.cat;
+  const suffix = n === 1 ? 'человека' : n < 5 ? 'человека' : 'человек';
+  colTotal.textContent = 'На\u00a0' + n + '\u00a0' + suffix;
+  ingBody.innerHTML = dish.ing.map(([name, per1, unit]) =>
+    `<tr><td>${name}</td><td>${fmt(per1, unit)}</td><td class="qty">${fmt(per1 * n, unit)}</td></tr>`
+  ).join('');
+  result.classList.add('show');
+  emptyMsg.style.display = 'none';
+}
+
+function hl(text, q) {
+  if (!q) return text;
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return text;
+  return text.slice(0, i) + '<mark>' + text.slice(i, i + q.length) + '</mark>' + text.slice(i + q.length);
+}
+
+function showDropdown(q) {
+  filteredNames = q ? names.filter(n => n.toLowerCase().includes(q.toLowerCase())) : names;
+  if (!filteredNames.length) { dropdown.classList.remove('open'); return; }
+  dropdown.innerHTML = filteredNames.map((n, i) =>
+    `<div class="opt" data-idx="${i}">${hl(n, q)}</div>`
+  ).join('');
+  dropdown.classList.add('open');
+  activeIdx = -1;
+  dropdown.querySelectorAll('.opt').forEach(el => {
+    el.addEventListener('mousedown', e => { e.preventDefault(); pick(filteredNames[+el.dataset.idx]); });
+  });
+}
+
+function pick(name) {
+  selectedDish = name;
+  input.value = name;
+  dropdown.classList.remove('open');
+  render();
+}
+
+input.addEventListener('input', () => { selectedDish = null; showDropdown(input.value); render(); });
+input.addEventListener('focus', () => showDropdown(input.value));
+input.addEventListener('blur', () => setTimeout(() => dropdown.classList.remove('open'), 150));
+input.addEventListener('keydown', e => {
+  const opts = dropdown.querySelectorAll('.opt');
+  if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, opts.length - 1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); }
+  else if (e.key === 'Enter' && activeIdx >= 0) { pick(filteredNames[activeIdx]); return; }
+  else if (e.key === 'Escape') { dropdown.classList.remove('open'); return; }
+  opts.forEach((o, i) => o.classList.toggle('active', i === activeIdx));
+  if (activeIdx >= 0) opts[activeIdx].scrollIntoView({ block: 'nearest' });
+});
+
+personsInput.addEventListener('input', render);
+personsInput.addEventListener('change', () => {
+  if (parseInt(personsInput.value) < 1 || !personsInput.value) personsInput.value = 1;
+  render();
+});
+document.getElementById('btn-minus').addEventListener('click', () => {
+  personsInput.value = Math.max(1, (parseInt(personsInput.value) || 1) - 1); render();
+});
+document.getElementById('btn-plus').addEventListener('click', () => {
+  personsInput.value = (parseInt(personsInput.value) || 1) + 1; render();
+});
+</script>
+</body>
+</html>
