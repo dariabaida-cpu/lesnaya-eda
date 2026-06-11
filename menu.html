@@ -503,8 +503,8 @@ function renderDays() {
       </div>
       <div style="padding:6px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
         <span style="font-size:0.8rem;color:var(--green)">👥</span>
-        <input type="number" min="0" value="${pCount}" style="width:48px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--accent);font-family:Georgia,serif;font-size:1rem;text-align:center;padding:3px;outline:none;-moz-appearance:textfield" onchange="setDayPeople(${i},this.value)" oninput="setDayPeople(${i},this.value)">
-        <span style="font-size:0.8rem;color:var(--text-dim)">${pl(pCount,'человек','человека','человек')}</span>
+        <input type="number" min="0" value="${pCount}" style="width:52px;background:var(--surface2);border:1px solid var(--accent-dim);border-radius:4px;color:var(--accent);font-family:Georgia,serif;font-size:1.1rem;text-align:center;padding:4px;outline:none;-moz-appearance:textfield" onchange="setDayPeople(${i},this.value)" oninput="setDayPeople(${i},this.value)">
+        <span style="font-size:0.8rem;color:var(--text-dim)">чел.</span>
       </div>
       <div class="meal-slots">
         <div><div class="meal-label"><span class="meal-label-dot" style="background:#D4894A"></span>Завтрак</div>
