@@ -1,0 +1,22 @@
+{
+  "name": "Лесная еда",
+  "short_name": "Лесная еда",
+  "description": "Раскладки и рецепты для лагеря",
+  "start_url": "./лесная_еда.html",
+  "display": "standalone",
+  "background_color": "#2C2416",
+  "theme_color": "#2C2416",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

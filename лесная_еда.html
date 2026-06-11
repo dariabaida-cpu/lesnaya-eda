@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лесная еда — раскладки</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2C2416">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Лесная еда">
+<link rel="apple-touch-icon" href="icon.png">
+
+<style>
+  :root {
+    --bg: #2C2416;
+    --surface: #3D3020;
+    --surface2: #4A3A28;
+    --parchment: #F5EDD6;
+    --parchment-dim: #C8BA9A;
+    --accent: #D4894A;
+    --green: #7A9E7E;
+    --green-dim: #5A7A5E;
+    --border: #5A4A35;
+    --text: #F5EDD6;
+    --text-dim: #A89878;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.45rem;
+    font-weight: normal;
+    color: var(--parchment);
+    letter-spacing: 0.03em;
+  }
+
+  header h1 span {
+    color: var(--accent);
+  }
+
+  .people-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+
+  .people-bar label {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .people-bar input[type=number] {
+    width: 52px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    color: var(--parchment);
+    font-size: 1.3rem;
+    font-family: Georgia, serif;
+    text-align: center;
+    outline: none;
+    padding: 2px 4px;
+    -moz-appearance: textfield;
+  }
+  .people-bar input[type=number]::-webkit-inner-spin-button,
+  .people-bar input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .btn-num {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: 1.1rem;
+    width: 26px; height: 26px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .btn-num:hover { background: var(--surface2); }
+
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 62px);
+  }
+
+  /* ---- SIDEBAR ---- */
+  .sidebar {
+    width: 280px;
+    min-width: 220px;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    padding: 12px 0;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .cat-block { margin-bottom: 4px; }
+
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+
+  .cat-header:hover { color: var(--green-dim); }
+
+  .cat-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+
+  .cat-arrow {
+    margin-left: auto;
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    color: var(--text-dim);
+  }
+
+  .cat-block.open .cat-arrow { transform: rotate(90deg); }
+
+  .dish-list {
+    display: none;
+    padding: 0 0 8px 0;
+  }
+
+  .cat-block.open .dish-list { display: block; }
+
+  .dish-item {
+    padding: 7px 16px 7px 28px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--parchment-dim);
+    transition: color 0.15s, background 0.15s;
+    border-left: 2px solid transparent;
+    line-height: 1.35;
+  }
+
+  .dish-item:hover {
+    color: var(--parchment);
+    background: rgba(212,137,74,0.08);
+  }
+
+  .dish-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(212,137,74,0.1);
+  }
+
+  /* ---- MAIN ---- */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 40px;
+  }
+
+  .main::-webkit-scrollbar { width: 4px; }
+  .main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    text-align: center;
+    gap: 12px;
+  }
+
+  .empty-state .icon { font-size: 3rem; opacity: 0.4; }
+
+  .empty-state p {
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    font-style: italic;
+  }
+
+  .recipe-view { display: none; }
+  .recipe-view.visible { display: block; }
+
+  .recipe-header {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .recipe-cat {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+
+  .recipe-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 2rem;
+    font-weight: normal;
+    color: var(--parchment);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .recipe-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .recipe-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* ---- INGREDIENTS ---- */
+  .section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .ingredients-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0;
+    margin-bottom: 36px;
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .ing-row {
+    display: contents;
+  }
+
+  .ing-name, .ing-qty {
+    padding: 9px 16px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  .ing-row:last-child .ing-name,
+  .ing-row:last-child .ing-qty {
+    border-bottom: none;
+  }
+
+  .ing-name {
+    color: var(--parchment);
+  }
+
+  .ing-qty {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-align: right;
+    white-space: nowrap;
+    border-left: 1px solid var(--border);
+  }
+
+  .ing-row:hover .ing-name,
+  .ing-row:hover .ing-qty {
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Total row */
+  .ing-total .ing-name {
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--surface2);
+  }
+  .ing-total .ing-qty {
+    font-weight: 600;
+    color: var(--parchment-dim);
+    background: var(--surface2);
+    font-size: 0.8rem;
+  }
+
+  /* ---- STEPS ---- */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: Georgia, serif;
+    font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+  }
+
+  .step-text {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--parchment-dim);
+    padding-top: 4px;
+  }
+
+  /* ---- QTY ANIMATION ---- */
+  .qty-val {
+    display: inline-block;
+    transition: opacity 0.15s;
+  }
+
+  .qty-val.flash {
+    opacity: 0.3;
+  }
+
+  /* ---- MOBILE ---- */
+  .back-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  .back-btn::before { content: '← '; }
+
+  @media (max-width: 640px) {
+    header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+    .people-bar { margin-left: 0; }
+
+    .layout {
+      flex-direction: column;
+      height: auto;
+      overflow: visible;
+      min-height: calc(100vh - 56px);
+    }
+
+    .sidebar {
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: none;
+      overflow-y: visible;
+      padding: 8px 0 16px;
+    }
+    .sidebar.hidden { display: none; }
+
+    .main {
+      padding: 20px 16px;
+      display: none;
+    }
+    .main.mobile-visible { display: block; }
+
+    .recipe-title { font-size: 1.4rem; }
+    .back-btn { display: flex; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Лесная <span>еда</span></h1>
+  <div class="people-bar">
+    <label>Человек</label>
+    <button class="btn-num" onclick="changePeople(-1)">−</button>
+    <input type="number" id="people" value="10" min="1" max="999" oninput="updateQty()">
+    <button class="btn-num" onclick="changePeople(1)">+</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main" id="main">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">🔥</div>
+      <p>Выберите блюдо</p>
+    </div>
+    <button class="back-btn" id="backBtn" onclick="goBack()">К списку блюд</button>
+    <div class="recipe-view" id="recipeView"></div>
+  </main>
+</div>
+
+<script>
+const RECIPES = {
+  "Завтраки": {
+    color: "#D4894A",
+    dishes: {
+      "Овсянка": {
+        ingredients: [
+          ["Геркулес", 60, "г"],
+          ["Молоко", 100, "мл"],
+          ["Вода", 100, "мл"],
+          ["Сливочное масло", 5, "г"],
+        ],
+        steps: [
+          "Вскипятить воду с молоком в котелке.",
+          "Всыпать геркулес, убавить огонь. Варить 5–7 минут при постоянном помешивании.",
+          "В конце добавить сливочное масло, посолить по вкусу. Дать настояться под крышкой 2–3 минуты."
+        ]
+      },
+      "Рисовая каша": {
+        ingredients: [
+          ["Рис", 70, "г"],
+          ["Молоко", 100, "мл"],
+          ["Вода", 150, "мл"],
+          ["Сахар", 7, "г"],
+          ["Соль", 0.5, "г"],
+          ["Сливочное масло", 5, "г"],
+        ],
+        steps: [
+          "Залить рис водой, варить до полуготовности (около 10 минут).",
+          "Влить молоко, добавить сахар и соль. Варить ещё 10–15 минут на слабом огне, помешивая.",
+          "Снять с огня, добавить масло, накрыть крышкой на 5 минут."
+        ]
+      },
+      "Гречневая каша с соусом": {
+        ingredients: [
+          ["Гречка", 70, "г"],
+          ["Вода", 200, "мл"],
+          ["Лук репчатый", 30, "г"],
+          ["Чеснок", 3, "г"],
+          ["Томатная паста", 10, "г"],
+          ["Масло растительное", 5, "мл"],
+          ["Соль", 1.5, "г"],
+        ],
+        steps: [
+          "Отварить гречку в подсоленной воде в соотношении 1:2 до готовности (15–18 минут).",
+          "Лук мелко нарезать, чеснок раздавить. Обжарить на масле до золотистого цвета.",
+          "Добавить томатную пасту к луку, перемешать, прогреть 2–3 минуты.",
+          "Полить гречку соусом, подавать горячей."
+        ]
+      },
+      "Манная каша": {
+        ingredients: [
+          ["Манка", 50, "г"],
+          ["Молоко", 100, "мл"],
+          ["Вода", 150, "мл"],
+          ["Сахар", 7, "г"],
+          ["Сливочное масло", 7, "г"],
+          ["Соль", 0.5, "г"],
+        ],
+        steps: [
+          "Смешать молоко и воду, довести до кипения.",
+          "Тонкой струйкой всыпать манку при постоянном помешивании — это важно, иначе образуются комки.",
+          "Варить 5 минут на слабом огне, не переставая мешать.",
+          "Снять с огня, добавить масло, сахар, соль. Накрыть на 3 минуты."
+        ]
+      },
+      "Вареные яйца": {
+        ingredients: [
+          ["Яйца", 2, "шт"],
+          ["Вода", null, "—"],
+        ],
+        steps: [
+          "Залить яйца холодной водой, поставить на огонь.",
+          "После закипания варить 7–8 минут (вкрутую) или 4–5 минут (всмятку).",
+          "Перелить в холодную воду на 2 минуты — так легче чистить."
+        ]
+      }
+    }
+  },
+
+  "Перекусы": {
+    color: "#7A9E7E",
+    dishes: {
+      "Бутерброды с чечевичной намазкой": {
+        ingredients: [
+          ["Хлеб нарезной", 80, "г"],
+          ["Чечевица", 30, "г"],
+          ["Лук", 30, "г"],
+          ["Морковь", 10, "г"],
+          ["Сметана", 20, "г"],
+          ["Вода", 35, "мл"],
+          ["Масло растительное", 5, "мл"],
+        ],
+        steps: [
+          "Замочить чечевицу на 30 минут, затем отварить до мягкости (20–25 минут).",
+          "Лук и морковь мелко нарезать, обжарить на масле до мягкости.",
+          "Слить воду с чечевицы, смешать с обжаренными овощами и сметаной. Размять вилкой до пастообразного состояния.",
+          "Намазать на хлеб, посолить по вкусу."
+        ]
+      },
+      "Бутерброды с морковной намазкой": {
+        ingredients: [
+          ["Хлеб нарезной", 80, "г"],
+          ["Морковь", 70, "г"],
+          ["Чеснок", 3, "г"],
+          ["Майонез", 20, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Морковь почистить, натереть на крупной тёрке.",
+          "Чеснок пропустить через пресс или мелко нарезать.",
+          "Смешать морковь, чеснок, майонез, посолить.",
+          "Намазать на хлеб."
+        ]
+      },
+      "Бутерброды с яичным салатом": {
+        ingredients: [
+          ["Хлеб нарезной", 80, "г"],
+          ["Яйца", 1, "шт"],
+          ["Чеснок", 3, "г"],
+          ["Майонез", 20, "г"],
+          ["Зелень", 5, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Яйца сварить вкрутую (8 минут), остудить, нарезать мелко.",
+          "Чеснок и зелень мелко нарезать.",
+          "Смешать яйца, чеснок, зелень и майонез. Посолить.",
+          "Намазать на хлеб."
+        ]
+      },
+      "Бутерброды с творожным сыром и огурцом": {
+        ingredients: [
+          ["Хлеб нарезной", 80, "г"],
+          ["Творожный сыр", 40, "г"],
+          ["Огурец", 100, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Намазать хлеб творожным сыром.",
+          "Огурец нарезать тонкими ломтиками, выложить сверху.",
+          "Слегка посолить."
+        ]
+      },
+      "Овсяные оладьи": {
+        ingredients: [
+          ["Геркулес", 60, "г"],
+          ["Яйца", 0.5, "шт"],
+          ["Молоко", 80, "мл"],
+          ["Сахар", 12, "г"],
+          ["Соль", 0.5, "г"],
+          ["Сода", 1, "г"],
+          ["Ванилин", 0.1, "г"],
+          ["Масло растительное", 15, "мл"],
+        ],
+        steps: [
+          "Смешать геркулес, яйцо, молоко, сахар, соль, ванилин и соду. Дать постоять 10 минут, чтобы геркулес набух.",
+          "Разогреть масло на сковороде.",
+          "Выкладывать тесто ложкой, жарить на среднем огне по 3–4 минуты с каждой стороны до золотистой корочки."
+        ]
+      },
+      "Кабачковые оладьи": {
+        ingredients: [
+          ["Кабачки", 250, "г"],
+          ["Мука", 30, "г"],
+          ["Яйца", 35, "г"],
+          ["Лук", 30, "г"],
+          ["Соль", 0.5, "г"],
+          ["Сода", 1, "г"],
+          ["Масло растительное", 15, "мл"],
+        ],
+        steps: [
+          "Кабачки натереть на крупной тёрке, отжать лишнюю жидкость руками.",
+          "Лук мелко нарезать. Смешать кабачки, лук, яйцо, муку, соль, соду.",
+          "Жарить оладьи на разогретом масле по 3–4 минуты с каждой стороны."
+        ]
+      },
+      "Кутабы с зеленью и творогом": {
+        ingredients: [
+          ["Мука", 70, "г"],
+          ["Вода тёплая", 25, "мл"],
+          ["Творог", 50, "г"],
+          ["Зелень", 10, "г"],
+          ["Чеснок", 1, "г"],
+          ["Масло растительное", 5, "мл"],
+          ["Соль", 0.5, "г"],
+        ],
+        steps: [
+          "Замесить крутое тесто из муки, воды и соли. Дать отдохнуть 15 минут под крышкой.",
+          "Творог размять, смешать с мелко нарезанной зеленью и чесноком.",
+          "Раскатать тесто тонко, нарезать кружками (или сложить полукругом). Выложить начинку, защипать края.",
+          "Жарить на сухой сковороде с двух сторон по 2–3 минуты. Смазать маслом."
+        ]
+      },
+      "Бутерброды с хумусом": {
+        ingredients: [
+          ["Хлеб", 100, "г"],
+          ["Нут", 30, "г"],
+          ["Морковь", 30, "г"],
+          ["Лук", 30, "г"],
+          ["Кабачки", 50, "г"],
+          ["Чеснок", 3, "г"],
+          ["Масло растительное", 10, "мл"],
+          ["Соль", 0.5, "г"],
+        ],
+        steps: [
+          "Замочить нут на ночь или на 4 часа, затем отварить до мягкости (1–1.5 часа).",
+          "Лук, морковь и кабачки нарезать и обжарить на масле до мягкости.",
+          "Смешать нут с обжаренными овощами, чесноком, солью. Взбить вилкой или нарубить до пастообразного состояния.",
+          "Намазать на хлеб. При желании сбрызнуть маслом."
+        ]
+      },
+      "Бутерброды с паштетом": {
+        ingredients: [
+          ["Хлеб", 100, "г"],
+          ["Печень куриная", 24, "г"],
+          ["Морковь", 18, "г"],
+          ["Лук", 18, "г"],
+          ["Яблоко", 18, "г"],
+          ["Масло сливочное", 1.8, "г"],
+          ["Специи", 0.3, "г"],
+          ["Соль", 0.24, "г"],
+        ],
+        steps: [
+          "Лук и морковь мелко нарезать, обжарить на масле до мягкости.",
+          "Добавить печень, готовить 5–7 минут. Яблоко нарезать и добавить в конце, потушить 3 минуты.",
+          "Снять с огня, добавить специи и соль. Пробить блендером до однородной пасты.",
+          "Намазать на хлеб."
+        ]
+      },
+      "Лаваш с арахисовой пастой и яблоком": {
+        ingredients: [
+          ["Лаваш", 70, "г"],
+          ["Арахисовая паста", 30, "г"],
+          ["Яблоко", 70, "г"],
+        ],
+        steps: [
+          "Намазать лаваш арахисовой пастой.",
+          "Яблоко нарезать тонкими ломтиками, выложить на лаваш.",
+          "Свернуть рулетом, нарезать на порции."
+        ]
+      },
+      "Лаваш с нутеллой и бананом": {
+        ingredients: [
+          ["Лаваш", 70, "г"],
+          ["Нутелла", 20, "г"],
+          ["Банан", 70, "г"],
+          ["Масло растительное", 2, "мл"],
+        ],
+        steps: [
+          "Намазать лаваш нутеллой.",
+          "Банан нарезать кружками, выложить на лаваш.",
+          "Свернуть рулетом. По желанию обжарить на масле на сковороде до золотистой корочки."
+        ]
+      }
+    }
+  },
+
+  "Салаты": {
+    color: "#9EC67A",
+    dishes: {
+      "Слоу": {
+        ingredients: [
+          ["Капуста белая", 60, "г"],
+          ["Капуста красная", 60, "г"],
+          ["Морковь", 30, "г"],
+          ["Майонез", 10, "г"],
+        ],
+        steps: [
+          "Капусту тонко нашинковать, немного помять руками с щепоткой соли.",
+          "Морковь натереть на крупной тёрке.",
+          "Смешать всё, заправить майонезом."
+        ]
+      },
+      "Салат с дайконом": {
+        ingredients: [
+          ["Дайкон", 100, "г"],
+          ["Морковь", 50, "г"],
+          ["Масло растительное", 7, "мл"],
+          ["Рисовый уксус", 2, "мл"],
+          ["Соль", 0.5, "г"],
+        ],
+        steps: [
+          "Дайкон и морковь натереть на тёрке или нарезать тонкой соломкой.",
+          "Смешать масло и рисовый уксус, посолить.",
+          "Заправить салат, перемешать, дать настояться 5 минут."
+        ]
+      },
+      "Красная капуста": {
+        ingredients: [
+          ["Капуста красная", 100, "г"],
+          ["Свёкла", 20, "г"],
+          ["Уксус", 5, "мл"],
+          ["Сахар", 1, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Капусту тонко нашинковать, свёклу нарезать тонкими ломтиками.",
+          "Смешать всё с уксусом, сахаром и солью.",
+          "Помять руками и дать настояться 10–15 минут."
+        ]
+      },
+      "Свекольный салат с яблоком": {
+        ingredients: [
+          ["Свёкла сырая", 70, "г"],
+          ["Морковь", 70, "г"],
+          ["Яблоко", 60, "г"],
+          ["Лук", 40, "г"],
+          ["Уксус", 3, "мл"],
+          ["Сахар", 1, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Свёклу, морковь и яблоко натереть на тёрке для корейской моркови.",
+          "Лук тонко нарезать.",
+          "Смешать всё, заправить уксусом, сахаром и солью. Дать настояться 10 минут."
+        ]
+      },
+      "Салат с фунчозой и морковью": {
+        ingredients: [
+          ["Фунчоза", 15, "г"],
+          ["Морковь", 70, "г"],
+          ["Перец зелёный", 60, "г"],
+          ["Уксус", 3, "мл"],
+          ["Сахар", 1, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Залить фунчозу кипятком на 5–7 минут, затем слить и промыть холодной водой. Нарезать ножницами на части.",
+          "Морковь натереть на тёрке, перец нарезать тонкой соломкой.",
+          "Смешать всё, заправить уксусом, сахаром, солью."
+        ]
+      },
+      "Картофельный салат": {
+        ingredients: [
+          ["Картофель отварной", 100, "г"],
+          ["Яйца варёные", 40, "г"],
+          ["Перец зелёный", 40, "г"],
+          ["Зелёный лук", 10, "г"],
+          ["Майонез", 6, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Картофель и яйца отварить заранее, остудить, нарезать кубиками.",
+          "Перец и зелёный лук мелко нарезать.",
+          "Смешать всё, заправить майонезом, посолить."
+        ]
+      },
+      "Капуста с морковью и кукурузой": {
+        ingredients: [
+          ["Капуста", 100, "г"],
+          ["Морковь", 70, "г"],
+          ["Кукуруза (консерва)", 30, "г"],
+          ["Зелёный лук", 10, "г"],
+          ["Майонез", 6, "г"],
+          ["Соль", 1, "г"],
+        ],
+        steps: [
+          "Капусту тонко нашинковать, немного помять с солью.",
+          "Морковь натереть, зелёный лук нарезать.",
+          "Смешать всё с кукурузой, заправить майонезом."
+        ]
+      }
+    }
+  },
+
+  "Супы": {
+    color: "#C4856A",
+    dishes: {
+      "Щи с курицей": {
+        ingredients: [
+          ["Курица", 100, "г"],
+          ["Капуста", 100, "г"],
+          ["Картофель", 120, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 40, "г"],
+          ["Чеснок", 4, "г"],
+          ["Масло растительное", 7.5, "мл"],
+          ["Вода", 400, "мл"],
+          ["Соль", 2, "г"],
+          ["Перец", 1, "г"],
+        ],
+        steps: [
+          "Курицу залить водой, поставить вариться. Снять пену после закипания. Варить 25–30 минут.",
+          "Вынуть курицу, дать немного остыть, разобрать на кусочки и вернуть в бульон.",
+          "Картофель нарезать кубиками, добавить в бульон. Лук и морковь мелко нарезать, обжарить на масле до мягкости. Добавить чеснок, потушить минуту.",
+          "Капусту нашинковать. Добавить в бульон вместе с зажаркой. Варить ещё 15 минут, посолить, поперчить."
+        ]
+      },
+      "Солянка": {
+        ingredients: [
+          ["Свинина", 100, "г"],
+          ["Копчёности", 50, "г"],
+          ["Оливки", 25, "г"],
+          ["Огурцы солёные", 20, "г"],
+          ["Морковь", 50, "г"],
+          ["Лук", 50, "г"],
+          ["Чеснок", 5, "г"],
+          ["Томатная паста", 15, "г"],
+          ["Масло растительное", 7.5, "мл"],
+          ["Вода", 400, "мл"],
+          ["Соль", 2, "г"],
+          ["Перец", 1, "г"],
+        ],
+        steps: [
+          "Свинину залить водой, варить 30–40 минут, снять пену. Вынуть мясо, нарезать кусочками, вернуть в бульон.",
+          "Лук и морковь обжарить на масле, добавить томатную пасту и чеснок, потушить 3 минуты.",
+          "Копчёности нарезать, огурцы нарезать мелко. Добавить всё в бульон вместе с зажаркой.",
+          "Добавить оливки, варить ещё 10 минут. Посолить, поперчить."
+        ]
+      },
+      "Рыбный суп": {
+        ingredients: [
+          ["Рыбные консервы", 90, "г"],
+          ["Картофель", 120, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 40, "г"],
+          ["Чеснок", 4, "г"],
+          ["Плавленый сыр", 30, "г"],
+          ["Лимон", 5, "г"],
+          ["Вода", 400, "мл"],
+          ["Соль", 2, "г"],
+          ["Перец", 1, "г"],
+        ],
+        steps: [
+          "Лук и морковь мелко нарезать, обжарить на масле. Добавить чеснок, потушить минуту.",
+          "Картофель нарезать кубиками, добавить к зажарке, залить водой. Варить до готовности картофеля (15–20 минут).",
+          "Добавить рыбные консервы вместе с соком, размешать.",
+          "Добавить плавленый сыр, размешать до растворения. Посолить, поперчить, добавить лимонный сок."
+        ]
+      },
+      "Борщ": {
+        ingredients: [
+          ["Свинина", 80, "г"],
+          ["Свёкла", 70, "г"],
+          ["Картофель", 120, "г"],
+          ["Капуста", 100, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 40, "г"],
+          ["Чеснок", 4, "г"],
+          ["Томатная паста", 25, "г"],
+          ["Вода", 450, "мл"],
+          ["Соль", 2, "г"],
+          ["Перец", 1, "г"],
+        ],
+        steps: [
+          "Свинину залить водой, варить 40–60 минут, снять пену. Вынуть мясо, нарезать кусочками, вернуть в бульон.",
+          "Свёклу натереть на крупной тёрке или нарезать соломкой. Обжарить с томатной пастой на масле 5 минут.",
+          "Картофель нарезать кубиками, добавить в бульон. Капусту нашинковать.",
+          "Лук и морковь обжарить. Добавить всё в бульон вместе со свёклой. Варить 15–20 минут. Добавить чеснок, соль, перец."
+        ]
+      },
+      "Бобовый суп с копчёностями": {
+        ingredients: [
+          ["Бобовые", 70, "г"],
+          ["Копчёности", 50, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 50, "г"],
+          ["Чеснок", 4, "г"],
+          ["Томатная паста", 25, "г"],
+          ["Паприка", 1, "г"],
+          ["Масло растительное", 7.5, "мл"],
+          ["Вода", 400, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Бобовые замочить заранее (4–8 часов). Отварить до полуготовности (30–40 минут).",
+          "Лук и морковь обжарить на масле, добавить томатную пасту, паприку и чеснок.",
+          "Копчёности нарезать, добавить в суп вместе с зажаркой.",
+          "Варить ещё 15–20 минут, посолить."
+        ]
+      },
+      "Томатный суп с макаронами": {
+        ingredients: [
+          ["Макароны", 50, "г"],
+          ["Лук", 50, "г"],
+          ["Томатная паста", 30, "г"],
+          ["Чеснок", 4, "г"],
+          ["Приправа итальянская", 3, "г"],
+          ["Паприка", 1, "г"],
+          ["Лимон", 10, "г"],
+          ["Масло растительное", 10, "мл"],
+          ["Вода", 450, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Лук мелко нарезать, обжарить на масле. Добавить томатную пасту, паприку, приправу, чеснок, потушить 3–4 минуты.",
+          "Влить воду, довести до кипения.",
+          "Добавить макароны, варить по времени на упаковке.",
+          "Выжать лимон, посолить."
+        ]
+      },
+      "Грибной суп": {
+        ingredients: [
+          ["Грибы", 70, "г"],
+          ["Картофель", 120, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 50, "г"],
+          ["Чеснок", 4, "г"],
+          ["Масло растительное", 10, "мл"],
+          ["Вода", 400, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Если грибы сушёные — замочить на 30 минут, воду оставить. Если свежие — нарезать.",
+          "Картофель нарезать кубиками, варить в воде (и грибном отваре) 10 минут.",
+          "Лук, морковь и грибы обжарить на масле. Добавить чеснок.",
+          "Добавить зажарку с грибами в суп, варить ещё 10 минут. Посолить."
+        ]
+      },
+      "Чечевичный суп с томатом": {
+        ingredients: [
+          ["Чечевица", 30, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 50, "г"],
+          ["Перец зелёный", 30, "г"],
+          ["Чеснок", 4, "г"],
+          ["Томатная паста", 15, "г"],
+          ["Масло растительное", 10, "мл"],
+          ["Вода", 250, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Чечевицу промыть. Красная чечевица варится 15 минут, зелёная — 30.",
+          "Лук, морковь и перец мелко нарезать, обжарить на масле. Добавить томатную пасту и чеснок.",
+          "Добавить чечевицу в зажарку, залить водой. Варить до мягкости чечевицы.",
+          "Посолить, при желании пробить блендером наполовину."
+        ]
+      },
+      "Суп с куриными пупочками": {
+        ingredients: [
+          ["Куриные пупочки", 40, "г"],
+          ["Картошка", 80, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 50, "г"],
+          ["Пшено", 10, "г"],
+          ["Чеснок", 4, "г"],
+          ["Масло растительное", 10, "мл"],
+          ["Вода", 250, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Пупочки хорошо промыть, нарезать. Варить в воде 40–50 минут до мягкости, снять пену.",
+          "Картошку нарезать кубиками, добавить в бульон.",
+          "Лук и морковь обжарить. Добавить пшено и зажарку в суп.",
+          "Варить ещё 15 минут. Добавить чеснок, посолить."
+        ]
+      }
+    }
+  },
+
+  "Второе": {
+    color: "#A07850",
+    dishes: {
+      "Макароны с фаршем": {
+        ingredients: [
+          ["Макароны", 100, "г"],
+          ["Фарш", 100, "г"],
+          ["Лук", 40, "г"],
+          ["Чеснок", 5, "г"],
+          ["Сыр плавленый", 30, "г"],
+          ["Паприка", 1, "г"],
+          ["Перец чёрный", 1, "г"],
+          ["Приправа итальянская", 1, "г"],
+          ["Вода", 250, "мл"],
+          ["Соль", null, "—"],
+        ],
+        steps: [
+          "Лук мелко нарезать, обжарить на масле. Добавить фарш, жарить до готовности, разбивая комки.",
+          "Добавить чеснок, паприку, итальянскую приправу, перец. Перемешать.",
+          "Отварить макароны отдельно до готовности, слить воду.",
+          "Смешать макароны с фаршем, добавить плавленый сыр. Прогреть до растворения сыра."
+        ]
+      },
+      "Варёная картошка с селёдкой": {
+        ingredients: [
+          ["Картофель", 350, "г"],
+          ["Селёдка", 100, "г"],
+          ["Лук репчатый", 30, "г"],
+          ["Огурцы солёные", 70, "г"],
+          ["Масло сливочное", 15, "г"],
+          ["Зелень", 10, "г"],
+        ],
+        steps: [
+          "Картофель вымыть, отварить в мундире до готовности (20–25 минут), очистить.",
+          "Селёдку очистить от костей, нарезать кусочками.",
+          "Лук тонко нарезать, огурцы нарезать ломтиками.",
+          "Подавать картошку горячей с маслом, рядом выложить селёдку, лук, огурцы и зелень."
+        ]
+      },
+      "Рис с курицей": {
+        ingredients: [
+          ["Рис", 90, "г"],
+          ["Курица бедро", 110, "г"],
+          ["Лук", 40, "г"],
+          ["Морковь", 50, "г"],
+          ["Чеснок", 5, "г"],
+          ["Масло растительное", 8, "мл"],
+          ["Вода", 200, "мл"],
+          ["Перец чёрный", 1, "г"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Лук мелко нарезать, обжарить на масле до прозрачности. Добавить морковь средней нарезкой, готовить вместе ещё 3–4 минуты.",
+          "Добавить кусочки курицы, немного обжарить всё вместе до лёгкой корочки.",
+          "Рис засыпать сверху ровным слоем, не перемешивая. Воткнуть несколько зубчиков чеснока целиком.",
+          "Залить водой так, чтобы покрывала рис на 1–1.5 см. Посолить, поперчить. Накрыть крышкой, готовить на слабом огне 20 минут, не открывая."
+        ]
+      },
+      "Курица с фасолью": {
+        ingredients: [
+          ["Курица бедро", 100, "г"],
+          ["Фасоль", 60, "г"],
+          ["Томатная паста", 20, "г"],
+          ["Лук", 40, "г"],
+          ["Чеснок", 4, "г"],
+          ["Масло растительное", 10, "мл"],
+          ["Вода", 300, "мл"],
+          ["Паприка", 1, "г"],
+          ["Перец чёрный", 1, "г"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Фасоль замочить на ночь, отварить 40–50 минут до мягкости.",
+          "Курицу нарезать, обжарить на масле до корочки.",
+          "Добавить лук, чеснок, томатную пасту, паприку. Потушить 3 минуты.",
+          "Добавить фасоль, влить воду. Тушить вместе 20–25 минут. Посолить, поперчить."
+        ]
+      },
+      "Гречка с мясным соусом": {
+        ingredients: [
+          ["Гречка", 90, "г"],
+          ["Фарш", 100, "г"],
+          ["Морковь", 40, "г"],
+          ["Лук", 40, "г"],
+          ["Чеснок", 4, "г"],
+          ["Томатная паста", 25, "г"],
+          ["Паприка", 1, "г"],
+          ["Перец чёрный", 1, "г"],
+          ["Приправа итальянская", 2, "г"],
+          ["Вода", 250, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Гречку отварить в подсоленной воде 1:2 до готовности (15 минут).",
+          "Лук и морковь мелко нарезать, обжарить на масле.",
+          "Добавить фарш, жарить до готовности. Добавить томатную пасту, чеснок и все приправы.",
+          "Влить немного воды, потушить соус 5 минут. Подавать гречку с соусом."
+        ]
+      },
+      "Шурпа": {
+        ingredients: [
+          ["Курица", 120, "г"],
+          ["Картофель", 250, "г"],
+          ["Морковь", 60, "г"],
+          ["Лук", 50, "г"],
+          ["Перец зелёный", 40, "г"],
+          ["Зелень", 15, "г"],
+          ["Масло растительное", 4, "мл"],
+          ["Вода", 300, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Курицу нарезать крупными кусками, обжарить на масле.",
+          "Картофель нарезать крупно, морковь — кружками, лук — полукольцами.",
+          "Сложить всё в котелок, залить водой. Варить 30–35 минут.",
+          "В конце добавить перец и зелень. Посолить. Блюдо должно быть густым, на границе супа и тушёного."
+        ]
+      },
+      "Свинина с яблоком и кускусом": {
+        ingredients: [
+          ["Свинина", 100, "г"],
+          ["Кускус", 40, "г"],
+          ["Яблоки", 50, "г"],
+          ["Лук", 50, "г"],
+          ["Зелень", 15, "г"],
+          ["Масло растительное", 4, "мл"],
+          ["Вода", 100, "мл"],
+          ["Соль", 2, "г"],
+        ],
+        steps: [
+          "Свинину нарезать кусочками, обжарить на масле до корочки. Лук нарезать, добавить к мясу.",
+          "Яблоко нарезать дольками, добавить к свинине. Влить воду, тушить 20–25 минут под крышкой.",
+          "Кускус залить кипятком (1:1), накрыть крышкой на 5 минут, затем взрыхлить вилкой.",
+          "Подавать свинину с яблоком поверх кускуса. Посыпать зеленью."
+        ]
+      }
+    }
+  }
+};
+
+// ---- BUILD SIDEBAR ----
+function buildSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  for (const [cat, data] of Object.entries(RECIPES)) {
+    const block = document.createElement('div');
+    block.className = 'cat-block open';
+
+    const header = document.createElement('div');
+    header.className = 'cat-header';
+    header.innerHTML = `<span class="cat-dot" style="background:${data.color}"></span>${cat}<span class="cat-arrow">▶</span>`;
+    header.onclick = () => block.classList.toggle('open');
+
+    const list = document.createElement('div');
+    list.className = 'dish-list';
+
+    for (const dishName of Object.keys(data.dishes)) {
+      const item = document.createElement('div');
+      item.className = 'dish-item';
+      item.textContent = dishName;
+      item.dataset.cat = cat;
+      item.dataset.dish = dishName;
+      item.onclick = () => selectDish(cat, dishName, item);
+      list.appendChild(item);
+    }
+
+    block.appendChild(header);
+    block.appendChild(list);
+    sidebar.appendChild(block);
+  }
+}
+
+// ---- RENDER RECIPE ----
+let currentDish = null;
+let currentCat = null;
+
+function isMobile() { return window.innerWidth <= 640; }
+
+function selectDish(cat, dishName, el) {
+  document.querySelectorAll('.dish-item').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  currentDish = dishName;
+  currentCat = cat;
+
+  document.getElementById('emptyState').style.display = 'none';
+  const view = document.getElementById('recipeView');
+  view.classList.add('visible');
+
+  renderRecipe(cat, dishName);
+
+  if (isMobile()) {
+    document.getElementById('sidebar').classList.add('hidden');
+    document.getElementById('main').classList.add('mobile-visible');
+    document.getElementById('backBtn').style.display = 'flex';
+    window.scrollTo(0, 0);
+  }
+}
+
+function goBack() {
+  document.getElementById('sidebar').classList.remove('hidden');
+  document.getElementById('main').classList.remove('mobile-visible');
+  document.getElementById('backBtn').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+function fmt(qty, n) {
+  if (qty === null || qty === undefined) return '—';
+  const val = qty * n;
+  return val % 1 === 0 ? val.toString() : parseFloat(val.toFixed(1)).toString();
+}
+
+function renderRecipe(cat, dishName) {
+  const data = RECIPES[cat].dishes[dishName];
+  const n = parseInt(document.getElementById('people').value) || 1;
+  const color = RECIPES[cat].color;
+
+  const totalGrams = data.ingredients
+    .filter(([,q]) => q !== null)
+    .reduce((s, [,q]) => s + q * n, 0);
+
+  let html = `
+    <div class="recipe-header">
+      <div class="recipe-cat" style="color:${color}">${cat}</div>
+      <div class="recipe-title">${dishName}</div>
+      <div class="recipe-meta">
+        <span>👥 <span id="metaPeople">${n}</span> чел.</span>
+        <span>⚖️ ~${Math.round(totalGrams)} г всего</span>
+      </div>
+    </div>
+
+    <div class="section-title">Ингредиенты</div>
+    <div class="ingredients-grid">
+  `;
+
+  for (const [name, qty, unit] of data.ingredients) {
+    const qtyStr = fmt(qty, n);
+    html += `
+      <div class="ing-row">
+        <div class="ing-name">${name}</div>
+        <div class="ing-qty"><span class="qty-val">${qtyStr}</span>&thinsp;${unit !== '—' ? unit : '—'}</div>
+      </div>
+    `;
+  }
+
+  html += `
+      <div class="ing-row ing-total">
+        <div class="ing-name">Итого</div>
+        <div class="ing-qty">~${Math.round(totalGrams)}&thinsp;г</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:8px">Приготовление</div>
+    <div class="steps-list">
+  `;
+
+  data.steps.forEach((step, i) => {
+    html += `
+      <div class="step">
+        <div class="step-num">${i + 1}</div>
+        <div class="step-text">${step}</div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  document.getElementById('recipeView').innerHTML = html;
+}
+
+function updateQty() {
+  if (!currentDish || !currentCat) return;
+  const n = parseInt(document.getElementById('people').value) || 1;
+  const data = RECIPES[currentCat].dishes[currentDish];
+
+  // Flash and update quantities
+  const vals = document.querySelectorAll('.qty-val');
+  vals.forEach(v => v.classList.add('flash'));
+
+  setTimeout(() => {
+    const ingRows = document.querySelectorAll('.ing-row:not(.ing-total)');
+    ingRows.forEach((row, i) => {
+      const [, qty] = data.ingredients[i];
+      const qtyEl = row.querySelector('.qty-val');
+      if (qtyEl) qtyEl.textContent = fmt(qty, n);
+    });
+
+    const totalGrams = data.ingredients
+      .filter(([,q]) => q !== null)
+      .reduce((s, [,q]) => s + q * n, 0);
+
+    const totalRow = document.querySelector('.ing-total .ing-qty');
+    if (totalRow) totalRow.textContent = `~${Math.round(totalGrams)}\u202Fг`;
+
+    const metaPeople = document.getElementById('metaPeople');
+    if (metaPeople) metaPeople.textContent = n;
+
+    document.querySelectorAll('.qty-val').forEach(v => v.classList.remove('flash'));
+  }, 120);
+}
+
+function changePeople(delta) {
+  const inp = document.getElementById('people');
+  const val = parseInt(inp.value) || 1;
+  inp.value = Math.max(1, val + delta);
+  updateQty();
+}
+
+buildSidebar();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js');
+  });
+}
+</script>
+</body>
+</html>
