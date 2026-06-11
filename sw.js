@@ -1,6 +1,6 @@
 const CACHE = 'lesnaya-eda-v1';
 const FILES = [
-  './лесная_еда.html',
+  './index.html',
   './manifest.json',
   './icon.png'
 ];
