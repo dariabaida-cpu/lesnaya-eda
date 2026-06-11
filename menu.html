@@ -154,13 +154,7 @@ header h1 span { color: var(--accent); }
     <button class="btn-sm btn-clear" onclick="clearMenu()">Очистить меню</button>
   </div>
 
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-    <div id="loadStatus" style="font-size:0.82rem;color:var(--text-dim);font-style:italic"></div>
-    <div class="add-person" style="margin-left:auto">
-      <input type="text" id="addPersonInput" placeholder="Добавить человека" onkeydown="if(event.key==='Enter')addPerson()">
-      <button onclick="addPerson()">Добавить</button>
-    </div>
-  </div>
+  <div id="loadStatus" style="font-size:0.82rem;color:var(--text-dim);font-style:italic;margin-bottom:16px"></div>
 
   <div class="days-grid" id="daysGrid"></div>
   <div class="summary-section">
@@ -306,8 +300,8 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHmQjW95EVtNJv
 
 let sheetData = null; // {dates: ['12.06','13.06',...], people: [{name, values:[0,1,1,...]}]}
 let currentPeople = []; // [{name, fromSheet:bool}] for current day range
-let extraPeople = [];   // manually added
-let removedNames = new Set(); // manually removed
+let dayRemoved = [new Set(), new Set(), new Set()];
+let dayExtra = [[], [], []];
 
 function parseCSV(text) {
   const lines = [];
@@ -383,8 +377,8 @@ function updatePeopleForDates() {
   const countPerDay = [0, 0, 0];
   dayPeopleNames = [[], [], []];
   for (const person of sheetData.people) {
-    if (removedNames.has(person.name)) continue;
     for (let di = 0; di < 3; di++) {
+      if (dayRemoved[di].has(person.name)) continue;
       const colIdx = sheetData.dates.indexOf(dateKeys[di]);
       if (colIdx >= 0 && person.values[colIdx] > 0) {
         dayPeopleNames[di].push({name: person.name, count: person.values[colIdx]});
@@ -393,9 +387,9 @@ function updatePeopleForDates() {
     }
   }
   for (let di = 0; di < 3; di++) {
-    countPerDay[di] += extraPeople.length;
-    for (const ep of extraPeople) {
+    for (const ep of dayExtra[di]) {
       dayPeopleNames[di].push({name: ep, count: 1, extra: true});
+      countPerDay[di] += 1;
     }
   }
 
@@ -406,11 +400,16 @@ function updatePeopleForDates() {
 function getDayPeopleHTML(dayIdx) {
   const people = dayPeopleNames[dayIdx] || [];
   if (!people.length) return '<span style="font-size:0.8rem;color:var(--text-dim);font-style:italic">Нет данных</span>';
-  return people.map(p => {
+  let html = people.map(p => {
     const label = p.count > 1 ? `${p.name} (×${p.count})` : p.name;
     const cls = p.extra ? 'extra' : '';
-    return `<div class="person-tag ${cls}" style="margin:2px 4px 2px 0"><span>${label}</span><span class="person-x" onclick="removePerson('${p.name.replace(/'/g,"\\'")}',${!!p.extra})">✕</span></div>`;
+    return `<div class="person-tag ${cls}" style="margin:2px 4px 2px 0"><span>${label}</span><span class="person-x" onclick="removePerson(${dayIdx},'${p.name.replace(/'/g,"\\'")}',${!!p.extra})">✕</span></div>`;
   }).join('');
+  html += `<div style="display:flex;gap:6px;width:100%;margin-top:6px">
+    <input type="text" id="addP${dayIdx}" placeholder="Добавить" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--parchment);font-size:0.8rem;padding:5px 8px;outline:none" onkeydown="if(event.key==='Enter')addPersonDay(${dayIdx})">
+    <button onclick="addPersonDay(${dayIdx})" style="background:var(--accent-dim);border:none;border-radius:4px;color:var(--parchment);font-size:0.78rem;padding:5px 10px;cursor:pointer;white-space:nowrap">+</button>
+  </div>`;
+  return html;
 }
 
 function toggleDayPeople(i) {
@@ -419,20 +418,20 @@ function toggleDayPeople(i) {
   if (el.style.display === 'flex') el.style.flexWrap = 'wrap';
 }
 
-function removePerson(name, isExtra) {
+function removePerson(dayIdx, name, isExtra) {
   if (isExtra) {
-    extraPeople = extraPeople.filter(n => n !== name);
+    dayExtra[dayIdx] = dayExtra[dayIdx].filter(n => n !== name);
   } else {
-    removedNames.add(name);
+    dayRemoved[dayIdx].add(name);
   }
   updatePeopleForDates();
 }
 
-function addPerson() {
-  const inp = document.getElementById('addPersonInput');
+function addPersonDay(dayIdx) {
+  const inp = document.getElementById('addP' + dayIdx);
   const name = inp.value.trim();
   if (!name) return;
-  if (!extraPeople.includes(name)) extraPeople.push(name);
+  if (!dayExtra[dayIdx].includes(name)) dayExtra[dayIdx].push(name);
   inp.value = '';
   updatePeopleForDates();
 }
@@ -464,8 +463,8 @@ function getStartDate() {
 function fmtDate(d) { return `${d.getDate()} ${MONTHS[d.getMonth()]}`; }
 
 function onDateChange() {
-  removedNames.clear();
-  extraPeople = [];
+  dayRemoved = [new Set(), new Set(), new Set()];
+  dayExtra = [[], [], []];
   updatePeopleForDates();
 }
 
