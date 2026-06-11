@@ -1,0 +1,10 @@
+{
+  "name": "Лесная еда — планировщик",
+  "short_name": "Меню",
+  "start_url": "./menu.html",
+  "display": "standalone",
+  "background_color": "#2C2416",
+  "theme_color": "#2C2416",
+  "lang": "ru",
+  "icons": [{"src": "icon_menu.png", "sizes": "192x192", "type": "image/png"}]
+}
