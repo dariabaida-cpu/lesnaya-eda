@@ -447,9 +447,9 @@ const today = new Date();
 document.getElementById('startDate').value = today.toISOString().slice(0,10);
 
 let menuData = {
-  d0: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
-  d1: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
-  d2: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
+  d0: {завтрак:'',перекус:'',суп:'',салат:'',ужин:'',гости:''},
+  d1: {завтрак:'',перекус:'',суп:'',салат:'',ужин:'',гости:''},
+  d2: {завтрак:'',перекус:'',суп:'',салат:'',ужин:'',гости:''},
 };
 let dayPeople = [0, 0, 0]; // editable count per day
 
@@ -515,6 +515,8 @@ function renderDays() {
           <select class="meal-select" onchange="setMeal('${dk}','салат',this.value)">${makeOpts('Салаты',m.салат)}</select></div>
         <div><div class="meal-label"><span class="meal-label-dot" style="background:#A07850"></span>Ужин</div>
           <select class="meal-select" onchange="setMeal('${dk}','ужин',this.value)">${makeOpts('Второе',m.ужин)}</select></div>
+        <div><div class="meal-label"><span class="meal-label-dot" style="background:#6A8FA0"></span>Гости</div>
+          <input type="text" class="meal-select" value="${m.гости}" placeholder="Заметки о гостях…" oninput="setMeal('${dk}','гости',this.value)" style="cursor:text;background-image:none;padding-right:10px"></div>
       </div>
     </div>`;
   }).join('');
@@ -531,7 +533,7 @@ function renderSummary() {
     const date = new Date(base); date.setDate(date.getDate()+i);
     const m = menuData[dk];
     const pCount = dayPeople[i];
-    const slots = [{l:'Завтрак',v:m.завтрак},{l:'Перекус',v:m.перекус},{l:'Суп',v:m.суп},{l:'Салат',v:m.салат},{l:'Ужин',v:m.ужин}];
+    const slots = [{l:'Завтрак',v:m.завтрак},{l:'Перекус',v:m.перекус},{l:'Суп',v:m.суп},{l:'Салат',v:m.салат},{l:'Ужин',v:m.ужин},{l:'Гости',v:m.гости}];
     const has = slots.some(s=>s.v); if(has) any=true;
     html += `<div class="summary-day"><div class="summary-day-title">${DOW_FULL[date.getDay()]}, ${fmtDate(date)} · ${pCount} чел.</div>`;
     for(const{l,v}of slots){if(v)html+=`<div class="summary-row"><span class="summary-row-label">${l}</span><span class="summary-row-val">${v}</span></div>`;}
@@ -542,7 +544,7 @@ function renderSummary() {
 }
 
 function clearMenu() {
-  menuData={d0:{завтрак:'',перекус:'',суп:'',салат:'',ужин:''},d1:{завтрак:'',перекус:'',суп:'',салат:'',ужин:''},d2:{завтрак:'',перекус:'',суп:'',салат:'',ужин:''}};
+  menuData={d0:{завтрак:'',перекус:'',суп:'',салат:'',ужин:'',гости:''},d1:{завтрак:'',перекус:'',суп:'',салат:'',ужин:'',гости:''},d2:{завтрак:'',перекус:'',суп:'',салат:'',ужин:'',гости:''}};
   renderDays();
 }
 
