@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лесная еда — меню</title>
+<style>
+:root {
+  --bg: #2C2416;
+  --surface: #3D3020;
+  --surface2: #4A3A28;
+  --surface3: #564535;
+  --parchment: #F5EDD6;
+  --parchment-dim: #C8BA9A;
+  --accent: #D4894A;
+  --accent-dim: #A86A35;
+  --green: #7A9E7E;
+  --blue: #6A8FA0;
+  --border: #5A4A35;
+  --text-dim: #A89878;
+  --red: #C05A3A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--parchment); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+
+header { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+header h1 { font-family: Georgia, serif; font-size: 1.3rem; font-weight: normal; }
+header h1 span { color: var(--accent); }
+
+.tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 24px; }
+.tab { padding: 12px 20px; cursor: pointer; font-size: 0.85rem; color: var(--text-dim); border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--parchment-dim); }
+
+.panel { display: none; padding: 24px; }
+.panel.active { display: block; }
+
+/* ---- SEARCH ---- */
+.search-wrap { position: relative; max-width: 480px; margin-bottom: 20px; }
+.search-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--parchment); font-size: 1rem; padding: 12px 16px 12px 40px; outline: none; }
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap input::placeholder { color: var(--text-dim); }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
+.search-hint { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 20px; font-style: italic; }
+.autocomplete { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; z-index: 100; max-height: 220px; overflow-y: auto; display: none; }
+.autocomplete.open { display: block; }
+.autocomplete-item { padding: 9px 16px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover, .autocomplete-item.hl { background: var(--surface3); }
+.autocomplete-item mark { background: none; color: var(--accent); font-weight: 600; }
+.search-results { max-width: 640px; }
+.search-results-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 12px; }
+.result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; border-left: 3px solid var(--accent); }
+.result-dish { font-family: Georgia, serif; font-size: 1rem; margin-bottom: 4px; }
+.result-cat { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+.result-ing { margin-top: 8px; font-size: 0.83rem; color: var(--parchment-dim); }
+.result-ing span { display: inline-block; background: var(--surface2); border-radius: 4px; padding: 2px 7px; margin: 2px 3px 2px 0; }
+.result-ing span.match { color: var(--accent); border: 1px solid var(--accent-dim); }
+.no-results { color: var(--text-dim); font-style: italic; font-size: 0.9rem; padding: 16px 0; }
+
+/* ---- PLANNER ---- */
+.planner-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.planner-header h2 { font-family: Georgia, serif; font-size: 1.2rem; font-weight: normal; }
+.date-pick { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; }
+.date-pick label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; }
+.date-pick input[type=date] { background: transparent; border: none; color: var(--parchment); font-size: 0.95rem; outline: none; }
+.date-pick input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+.btn-sm { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-size: 0.82rem; padding: 8px 14px; cursor: pointer; }
+.btn-sm:hover { color: var(--parchment-dim); border-color: var(--parchment-dim); }
+.btn-clear:hover { color: var(--red); border-color: var(--red); }
+
+/* People panel */
+.people-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+.people-header { background: var(--surface2); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.people-header-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); }
+.people-count { font-family: Georgia, serif; font-size: 1.2rem; color: var(--accent); margin-left: auto; }
+.people-count small { font-size: 0.75rem; color: var(--text-dim); font-family: system-ui; }
+.people-body { padding: 12px 16px; }
+.people-status { font-size: 0.82rem; color: var(--text-dim); font-style: italic; margin-bottom: 10px; }
+.people-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.person-tag { display: flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.82rem; }
+.person-tag .person-x { cursor: pointer; color: var(--text-dim); font-size: 0.8rem; padding: 0 2px; border-radius: 3px; }
+.person-tag .person-x:hover { color: var(--red); }
+.person-tag.extra { border-color: var(--green); color: var(--green); }
+.add-person { display: flex; gap: 8px; }
+.add-person input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--parchment); font-size: 0.85rem; padding: 7px 10px; outline: none; }
+.add-person input:focus { border-color: var(--accent); }
+.add-person button { background: var(--accent-dim); border: none; border-radius: 6px; color: var(--parchment); font-size: 0.82rem; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+.add-person button:hover { background: var(--accent); }
+
+/* Days grid */
+.days-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+.day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.day-header { background: var(--surface2); padding: 10px 14px; display: flex; align-items: baseline; gap: 8px; border-bottom: 1px solid var(--border); }
+.day-num { font-family: Georgia, serif; font-size: 1.3rem; color: var(--accent); }
+.day-date { font-size: 0.8rem; color: var(--parchment-dim); }
+.day-dow { font-size: 0.75rem; color: var(--text-dim); margin-left: auto; text-transform: uppercase; letter-spacing: 0.07em; }
+.day-people-count { font-size: 0.75rem; color: var(--green); }
+.meal-slots { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.meal-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.meal-label-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.meal-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--parchment); font-size: 0.83rem; padding: 7px 10px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23A89878'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.meal-select:focus { border-color: var(--accent); }
+.meal-select option { background: #3D3020; }
+
+/* Summary */
+.summary-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.summary-title { background: var(--surface2); padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+.summary-body { padding: 16px; }
+.summary-day { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.summary-day:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.summary-day-title { font-family: Georgia, serif; font-size: 0.95rem; color: var(--accent); margin-bottom: 8px; }
+.summary-row { display: flex; gap: 8px; align-items: baseline; margin-bottom: 4px; font-size: 0.85rem; }
+.summary-row-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; width: 60px; flex-shrink: 0; }
+.summary-row-val { color: var(--parchment-dim); }
+.summary-empty { color: var(--text-dim); font-style: italic; font-size: 0.85rem; padding: 12px 0; }
+
+@media (max-width: 680px) {
+  .tabs { padding: 0 12px; }
+  .tab { padding: 10px 12px; font-size: 0.8rem; }
+  .panel { padding: 16px; }
+  .days-grid { grid-template-columns: 1fr; gap: 12px; }
+  .planner-header { gap: 10px; }
+}
+</style>
+</head>
+<body>
+<header><h1>Лесная <span>еда</span> — планировщик</h1></header>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('search')">🔍 Поиск по продукту</div>
+  <div class="tab" onclick="switchTab('planner')">📅 Меню на 3 дня</div>
+</div>
+
+<!-- SEARCH PANEL -->
+<div class="panel active" id="panel-search">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Введите продукт — морковь, курица…" autocomplete="off" oninput="onSearchInput()" onkeydown="onSearchKey(event)" onfocus="showAC()">
+    <div class="autocomplete" id="autocomplete"></div>
+  </div>
+  <p class="search-hint">Показывает все блюда, в которых есть этот продукт</p>
+  <div class="search-results" id="searchResults"></div>
+</div>
+
+<!-- PLANNER PANEL -->
+<div class="panel" id="panel-planner">
+  <div class="planner-header">
+    <h2>Меню экспедиции</h2>
+    <div class="date-pick">
+      <label>С&nbsp;</label>
+      <input type="date" id="startDate" onchange="onDateChange()">
+    </div>
+    <button class="btn-sm" onclick="loadPeople()">Обновить список</button>
+    <button class="btn-sm btn-clear" onclick="clearMenu()">Очистить меню</button>
+  </div>
+
+  <div class="people-section" id="peopleSection">
+    <div class="people-header">
+      <span class="people-header-title">👥 Участники</span>
+      <span class="people-count" id="peopleCount">—</span>
+    </div>
+    <div class="people-body">
+      <div class="people-status" id="peopleStatus">Загрузка списка…</div>
+      <div class="people-list" id="peopleList"></div>
+      <div class="add-person">
+        <input type="text" id="addPersonInput" placeholder="Добавить человека" onkeydown="if(event.key==='Enter')addPerson()">
+        <button onclick="addPerson()">Добавить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="days-grid" id="daysGrid"></div>
+  <div class="summary-section">
+    <div class="summary-title">📋 Итоговое меню</div>
+    <div class="summary-body" id="summaryBody"><p class="summary-empty">Выберите блюда выше</p></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// RECIPE DATA
+// ============================================================
+const RECIPES = {
+  "Завтраки": {
+    color: "#D4894A",
+    dishes: {
+      "Овсянка": ["Геркулес","Молоко","Вода","Масло сливочное"],
+      "Рисовая каша": ["Рис","Молоко","Вода","Сахар","Соль","Масло сливочное"],
+      "Гречневая каша с соусом": ["Гречка","Лук","Чеснок","Томатная паста","Масло растительное","Соль","Вода"],
+      "Манная каша": ["Манка","Молоко","Вода","Сахар","Масло сливочное","Соль"],
+      "Вареные яйца": ["Яйца","Вода"],
+    }
+  },
+  "Перекусы": {
+    color: "#7A9E7E",
+    dishes: {
+      "Бутерброды с чечевичной намазкой": ["Хлеб","Чечевица","Лук","Морковь","Сметана","Вода","Масло растительное"],
+      "Бутерброды с морковной намазкой": ["Хлеб","Морковь","Чеснок","Майонез","Соль"],
+      "Бутерброды с яичным салатом": ["Хлеб","Яйца","Чеснок","Майонез","Зелень","Соль"],
+      "Бутерброды с творожным сыром и огурцом": ["Хлеб","Творожный сыр","Огурец","Соль"],
+      "Овсяные оладьи": ["Геркулес","Яйца","Молоко","Сахар","Соль","Сода","Ванилин","Масло растительное"],
+      "Кабачковые оладьи": ["Кабачки","Мука","Яйца","Лук","Соль","Сода","Масло растительное"],
+      "Кутабы с зеленью и творогом": ["Мука","Вода","Творог","Зелень","Чеснок","Масло растительное","Соль"],
+      "Бутерброды с хумусом": ["Хлеб","Нут","Морковь","Лук","Кабачки","Чеснок","Масло растительное","Соль"],
+      "Бутерброды с паштетом": ["Хлеб","Печень куриная","Морковь","Лук","Яблоко","Масло сливочное","Специи","Соль"],
+      "Лаваш с арахисовой пастой и яблоком": ["Лаваш","Арахисовая паста","Яблоко"],
+      "Лаваш с нутеллой и бананом": ["Лаваш","Нутелла","Банан","Масло растительное"],
+    }
+  },
+  "Салаты": {
+    color: "#9EC67A",
+    dishes: {
+      "Слоу": ["Капуста белокочанная","Капуста красная","Морковь","Майонез"],
+      "Салат с дайконом": ["Дайкон","Морковь","Масло растительное","Уксус","Соль"],
+      "Красная капуста": ["Капуста красная","Свёкла","Уксус","Сахар","Соль"],
+      "Свекольный салат с яблоком": ["Свёкла","Морковь","Яблоко","Лук","Уксус","Сахар","Соль"],
+      "Салат с фунчозой и морковью": ["Фунчоза","Морковь","Перец зелёный","Уксус","Сахар","Соль"],
+      "Картофельный салат": ["Картофель","Яйца","Перец зелёный","Зелёный лук","Майонез","Соль"],
+      "Капуста с морковью и кукурузой": ["Капуста белокочанная","Морковь","Кукуруза","Зелёный лук","Майонез","Соль"],
+    }
+  },
+  "Супы": {
+    color: "#C4856A",
+    dishes: {
+      "Щи с курицей": ["Курица","Капуста белокочанная","Картофель","Морковь","Лук","Чеснок","Масло растительное","Вода","Соль","Перец"],
+      "Солянка": ["Свинина","Копчёности","Оливки","Огурцы солёные","Морковь","Лук","Чеснок","Томатная паста","Масло растительное","Вода","Соль","Перец"],
+      "Рыбный суп": ["Рыбные консервы","Картофель","Морковь","Лук","Чеснок","Плавленый сыр","Лимон","Вода","Соль","Перец"],
+      "Борщ": ["Свинина","Свёкла","Картофель","Капуста белокочанная","Морковь","Лук","Чеснок","Томатная паста","Вода","Соль","Перец"],
+      "Бобовый суп с копчёностями": ["Бобовые","Копчёности","Морковь","Лук","Чеснок","Томатная паста","Паприка","Масло растительное","Вода","Соль"],
+      "Томатный суп с макаронами": ["Макароны","Лук","Томатная паста","Чеснок","Приправа итальянская","Паприка","Лимон","Масло растительное","Вода","Соль"],
+      "Грибной суп": ["Грибы","Картофель","Морковь","Лук","Чеснок","Масло растительное","Вода","Соль"],
+      "Чечевичный суп с томатом": ["Чечевица","Морковь","Лук","Перец зелёный","Чеснок","Томатная паста","Масло растительное","Вода","Соль"],
+      "Суп с куриными пупочками": ["Куриные пупочки","Картофель","Морковь","Лук","Пшено","Чеснок","Масло растительное","Вода","Соль"],
+    }
+  },
+  "Второе": {
+    color: "#A07850",
+    dishes: {
+      "Макароны с фаршем": ["Макароны","Фарш","Лук","Чеснок","Плавленый сыр","Паприка","Перец","Приправа итальянская","Вода","Соль"],
+      "Варёная картошка с селёдкой": ["Картофель","Селёдка","Лук","Огурцы солёные","Масло сливочное","Зелень"],
+      "Рис с курицей": ["Рис","Курица","Лук","Морковь","Чеснок","Масло растительное","Вода","Перец","Соль"],
+      "Курица с фасолью": ["Курица","Фасоль","Томатная паста","Лук","Чеснок","Масло растительное","Вода","Паприка","Перец","Соль"],
+      "Гречка с мясным соусом": ["Гречка","Фарш","Морковь","Лук","Чеснок","Томатная паста","Паприка","Перец","Приправа итальянская","Вода","Соль"],
+      "Шурпа": ["Курица","Картофель","Морковь","Лук","Перец зелёный","Зелень","Масло растительное","Вода","Соль"],
+      "Свинина с яблоком и кускусом": ["Свинина","Кускус","Яблоко","Лук","Зелень","Масло растительное","Вода","Соль"],
+    }
+  }
+};
+
+// Inverted index
+const ING_INDEX = {};
+for (const [cat, data] of Object.entries(RECIPES)) {
+  for (const [dish, ings] of Object.entries(data.dishes)) {
+    for (const ing of ings) {
+      const k = ing.toLowerCase();
+      if (!ING_INDEX[k]) ING_INDEX[k] = [];
+      ING_INDEX[k].push({cat, dish, ings});
+    }
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&id==='search')||(i===1&&id==='planner')));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+let acHL=-1, acItems=[];
+function onSearchInput() { showAC(); }
+function showAC() {
+  const q=document.getElementById('searchInput').value.trim().toLowerCase();
+  const ac=document.getElementById('autocomplete');
+  if(q.length<1){ac.classList.remove('open');return;}
+  acItems=[...new Set(Object.keys(ING_INDEX).filter(k=>k.includes(q)).sort((a,b)=>a.startsWith(q)?-1:b.startsWith(q)?1:0))].slice(0,10);
+  if(!acItems.length){ac.classList.remove('open');doSearch(q);return;}
+  ac.innerHTML=acItems.map((item,i)=>`<div class="autocomplete-item" onclick="selAC(${i})">${item.replace(new RegExp('('+q+')','gi'),'<mark>$1</mark>')}</div>`).join('');
+  ac.classList.add('open'); acHL=-1;
+}
+function selAC(i){document.getElementById('searchInput').value=acItems[i];document.getElementById('autocomplete').classList.remove('open');doSearch(acItems[i]);}
+function onSearchKey(e){
+  const items=document.querySelectorAll('.autocomplete-item');
+  if(e.key==='ArrowDown'){e.preventDefault();acHL=Math.min(acHL+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('hl',i===acHL));}
+  else if(e.key==='ArrowUp'){e.preventDefault();acHL=Math.max(acHL-1,-1);items.forEach((el,i)=>el.classList.toggle('hl',i===acHL));}
+  else if(e.key==='Enter'){if(acHL>=0&&acItems[acHL])selAC(acHL);else{document.getElementById('autocomplete').classList.remove('open');doSearch(document.getElementById('searchInput').value.trim().toLowerCase());}}
+  else if(e.key==='Escape')document.getElementById('autocomplete').classList.remove('open');
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))document.getElementById('autocomplete').classList.remove('open');});
+
+function doSearch(q){
+  if(!q)return;const qL=q.toLowerCase(),found=[];
+  for(const[key,entries]of Object.entries(ING_INDEX)){if(key.includes(qL)){for(const e of entries){if(!found.find(f=>f.dish===e.dish))found.push(e);}}}
+  const res=document.getElementById('searchResults');
+  if(!found.length){res.innerHTML=`<p class="no-results">Продукт «${q}» не найден ни в одном рецепте</p>`;return;}
+  let html=`<p class="search-results-title">Найдено ${found.length} ${pl(found.length,'рецепт','рецепта','рецептов')}</p>`;
+  for(const{cat,dish,ings}of found){
+    const color=RECIPES[cat].color;
+    html+=`<div class="result-card" style="border-left-color:${color}"><div class="result-dish">${dish}</div><div class="result-cat">${cat}</div><div class="result-ing">${ings.map(i=>`<span class="${i.toLowerCase().includes(qL)?'match':''}">${i}</span>`).join('')}</div></div>`;
+  }
+  res.innerHTML=html;
+}
+function pl(n,o,f,m){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return n+' '+o;if([2,3,4].includes(m10)&&![12,13,14].includes(m100))return n+' '+f;return n+' '+m;}
+
+// ============================================================
+// PEOPLE FROM GOOGLE SHEETS
+// ============================================================
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHmQjW95EVtNJvNjq1NhNLHlDUYdma1yu9PgwEplYbziKTq0UsokarGUpEzCaLZl0h-TzFarf1OKDg/pub?gid=0&single=true&output=csv';
+
+let sheetData = null; // {dates: ['12.06','13.06',...], people: [{name, values:[0,1,1,...]}]}
+let currentPeople = []; // [{name, fromSheet:bool}] for current day range
+let extraPeople = [];   // manually added
+let removedNames = new Set(); // manually removed
+
+function parseCSV(text) {
+  const lines = [];
+  let current = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') { inQuotes = !inQuotes; current += ch; }
+    else if (ch === '\n' && !inQuotes) { lines.push(current); current = ''; }
+    else { current += ch; }
+  }
+  if (current) lines.push(current);
+  return lines.map(line => {
+    const cells = []; let cell = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { q = !q; }
+      else if (ch === ',' && !q) { cells.push(cell); cell = ''; }
+      else { cell += ch; }
+    }
+    cells.push(cell);
+    return cells;
+  });
+}
+
+async function loadPeople() {
+  document.getElementById('peopleStatus').textContent = 'Загрузка из Google Таблицы…';
+  try {
+    const resp = await fetch(CSV_URL);
+    const text = await resp.text();
+    const rows = parseCSV(text);
+
+    // Row 0: header — dates in cols 2+
+    const headerRow = rows[0];
+    const dates = headerRow.slice(2).map(d => d.trim());
+
+    // Rows 1+: col 0 = number, col 1 = name, cols 2+ = values
+    const people = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const name = (row[1] || '').trim();
+      if (!name || name === 'ВСЕГО:' || name.startsWith('*') || !name.match(/[а-яА-Яa-zA-Z]/)) continue;
+      const values = row.slice(2).map(v => parseInt(v) || 0);
+      const totalDays = values.reduce((s,v) => s + (v > 0 ? 1 : 0), 0);
+      if (totalDays === 0) continue; // skip people with 0 days
+      people.push({ name, values });
+    }
+
+    sheetData = { dates, people };
+    document.getElementById('peopleStatus').textContent = `Загружено ${people.length} участников из таблицы`;
+    updatePeopleForDates();
+  } catch (e) {
+    document.getElementById('peopleStatus').textContent = 'Ошибка загрузки. Проверьте интернет и попробуйте «Обновить список».';
+  }
+}
+
+function dateToDDMM(dateObj) {
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  return dd + '.' + mm;
+}
+
+function updatePeopleForDates() {
+  if (!sheetData) return;
+  const base = getStartDate();
+  const dateKeys = [0,1,2].map(i => {
+    const d = new Date(base); d.setDate(d.getDate() + i);
+    return dateToDDMM(d);
+  });
+
+  // Find people present on ANY of the 3 days
+  const present = new Set();
+  const countPerDay = [0, 0, 0];
+  for (const person of sheetData.people) {
+    for (let di = 0; di < 3; di++) {
+      const colIdx = sheetData.dates.indexOf(dateKeys[di]);
+      if (colIdx >= 0 && person.values[colIdx] > 0) {
+        present.add(person.name);
+        countPerDay[di] += person.values[colIdx];
+      }
+    }
+  }
+
+  currentPeople = [...present].filter(n => !removedNames.has(n));
+  renderPeople(countPerDay);
+  renderDays(countPerDay);
+}
+
+function renderPeople(countPerDay) {
+  const list = document.getElementById('peopleList');
+  const allPeople = [...currentPeople.map(n => ({name: n, extra: false})), ...extraPeople.map(n => ({name: n, extra: true}))];
+  const total = allPeople.length;
+
+  document.getElementById('peopleCount').innerHTML = `${total} <small>${pl(total, 'человек', 'человека', 'человек')}</small>`;
+
+  list.innerHTML = allPeople.map(({name, extra}) =>
+    `<div class="person-tag ${extra?'extra':''}"><span>${name}</span><span class="person-x" onclick="removePerson('${name.replace(/'/g,"\\'")}',${extra})">✕</span></div>`
+  ).join('');
+}
+
+function removePerson(name, isExtra) {
+  if (isExtra) {
+    extraPeople = extraPeople.filter(n => n !== name);
+  } else {
+    removedNames.add(name);
+    currentPeople = currentPeople.filter(n => n !== name);
+  }
+  renderPeople();
+  renderDays();
+}
+
+function addPerson() {
+  const inp = document.getElementById('addPersonInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (!extraPeople.includes(name) && !currentPeople.includes(name)) {
+    extraPeople.push(name);
+  }
+  inp.value = '';
+  renderPeople();
+  renderDays();
+}
+
+// ============================================================
+// PLANNER
+// ============================================================
+const DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DOW_FULL = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+const today = new Date();
+document.getElementById('startDate').value = today.toISOString().slice(0,10);
+
+let menuData = {
+  d0: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
+  d1: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
+  d2: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
+};
+
+function getStartDate() {
+  const v = document.getElementById('startDate').value;
+  if (!v) return new Date();
+  const [y,m,d] = v.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function fmtDate(d) { return `${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+
+function onDateChange() {
+  removedNames.clear();
+  extraPeople = [];
+  updatePeopleForDates();
+}
+
+function makeOpts(cat, sel) {
+  const dishes = Object.keys(RECIPES[cat].dishes);
+  return `<option value="">— не выбрано —</option>` + dishes.map(d => `<option value="${d}" ${sel===d?'selected':''}>${d}</option>`).join('');
+}
+
+function getPeopleCountForDay(dayOffset) {
+  if (!sheetData) return currentPeople.length + extraPeople.length;
+  const base = getStartDate();
+  const d = new Date(base); d.setDate(d.getDate() + dayOffset);
+  const dk = dateToDDMM(d);
+  const colIdx = sheetData.dates.indexOf(dk);
+  let count = 0;
+  if (colIdx >= 0) {
+    for (const person of sheetData.people) {
+      if (!removedNames.has(person.name) && person.values[colIdx] > 0) {
+        count += person.values[colIdx];
+      }
+    }
+  }
+  count += extraPeople.length;
+  return count;
+}
+
+function renderDays() {
+  const base = getStartDate();
+  document.getElementById('daysGrid').innerHTML = ['d0','d1','d2'].map((dk, i) => {
+    const date = new Date(base); date.setDate(date.getDate() + i);
+    const m = menuData[dk];
+    const pCount = getPeopleCountForDay(i);
+    return `
+    <div class="day-card">
+      <div class="day-header">
+        <span class="day-num">День ${i+1}</span>
+        <span class="day-date">${fmtDate(date)}</span>
+        <span class="day-dow">${DOW[date.getDay()]}</span>
+      </div>
+      <div style="padding:6px 14px;font-size:0.8rem;color:var(--green);border-bottom:1px solid var(--border)">👥 ${pCount} ${pl(pCount,'человек','человека','человек')}</div>
+      <div class="meal-slots">
+        <div><div class="meal-label"><span class="meal-label-dot" style="background:#D4894A"></span>Завтрак</div>
+          <select class="meal-select" onchange="setMeal('${dk}','завтрак',this.value)">${makeOpts('Завтраки',m.завтрак)}</select></div>
+        <div><div class="meal-label"><span class="meal-label-dot" style="background:#7A9E7E"></span>Перекус</div>
+          <select class="meal-select" onchange="setMeal('${dk}','перекус',this.value)">${makeOpts('Перекусы',m.перекус)}</select></div>
+        <div><div class="meal-label"><span class="meal-label-dot" style="background:#C4856A"></span>Обед — суп</div>
+          <select class="meal-select" onchange="setMeal('${dk}','суп',this.value)">${makeOpts('Супы',m.суп)}</select></div>
+        <div><div class="meal-label"><span class="meal-label-dot" style="background:#9EC67A"></span>Обед — салат</div>
+          <select class="meal-select" onchange="setMeal('${dk}','салат',this.value)">${makeOpts('Салаты',m.салат)}</select></div>
+        <div><div class="meal-label"><span class="meal-label-dot" style="background:#A07850"></span>Ужин</div>
+          <select class="meal-select" onchange="setMeal('${dk}','ужин',this.value)">${makeOpts('Второе',m.ужин)}</select></div>
+      </div>
+    </div>`;
+  }).join('');
+  renderSummary();
+}
+
+function setMeal(dk, slot, val) { menuData[dk][slot] = val; renderSummary(); }
+
+function renderSummary() {
+  const base = getStartDate();
+  const body = document.getElementById('summaryBody');
+  let any = false, html = '';
+  ['d0','d1','d2'].forEach((dk,i) => {
+    const date = new Date(base); date.setDate(date.getDate()+i);
+    const m = menuData[dk];
+    const pCount = getPeopleCountForDay(i);
+    const slots = [{l:'Завтрак',v:m.завтрак},{l:'Перекус',v:m.перекус},{l:'Суп',v:m.суп},{l:'Салат',v:m.салат},{l:'Ужин',v:m.ужин}];
+    const has = slots.some(s=>s.v); if(has) any=true;
+    html += `<div class="summary-day"><div class="summary-day-title">${DOW_FULL[date.getDay()]}, ${fmtDate(date)} · ${pCount} чел.</div>`;
+    for(const{l,v}of slots){if(v)html+=`<div class="summary-row"><span class="summary-row-label">${l}</span><span class="summary-row-val">${v}</span></div>`;}
+    if(!has) html+=`<div style="font-size:0.82rem;color:var(--text-dim);font-style:italic">Не заполнено</div>`;
+    html+=`</div>`;
+  });
+  body.innerHTML = any ? html : `<p class="summary-empty">Выберите блюда выше</p>`;
+}
+
+function clearMenu() {
+  menuData={d0:{завтрак:'',перекус:'',суп:'',салат:'',ужин:''},d1:{завтрак:'',перекус:'',суп:'',салат:'',ужин:''},d2:{завтрак:'',перекус:'',суп:'',салат:'',ужин:''}};
+  renderDays();
+}
+
+// Init
+renderDays();
+loadPeople();
+</script>
+</body>
+</html>
