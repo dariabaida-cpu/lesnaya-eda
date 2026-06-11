@@ -388,6 +388,7 @@ function updatePeopleForDates() {
   const present = new Set();
   const countPerDay = [0, 0, 0];
   for (const person of sheetData.people) {
+    if (removedNames.has(person.name)) continue;
     for (let di = 0; di < 3; di++) {
       const colIdx = sheetData.dates.indexOf(dateKeys[di]);
       if (colIdx >= 0 && person.values[colIdx] > 0) {
@@ -396,7 +397,11 @@ function updatePeopleForDates() {
       }
     }
   }
+  for (let di = 0; di < 3; di++) {
+    countPerDay[di] += extraPeople.length;
+  }
 
+  dayPeople = countPerDay;
   currentPeople = [...present].filter(n => !removedNames.has(n));
   renderPeople(countPerDay);
   renderDays(countPerDay);
@@ -452,6 +457,7 @@ let menuData = {
   d1: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
   d2: {завтрак:'',перекус:'',суп:'',салат:'',ужин:''},
 };
+let dayPeople = [0, 0, 0]; // editable count per day
 
 function getStartDate() {
   const v = document.getElementById('startDate').value;
@@ -474,21 +480,12 @@ function makeOpts(cat, sel) {
 }
 
 function getPeopleCountForDay(dayOffset) {
-  if (!sheetData) return currentPeople.length + extraPeople.length;
-  const base = getStartDate();
-  const d = new Date(base); d.setDate(d.getDate() + dayOffset);
-  const dk = dateToDDMM(d);
-  const colIdx = sheetData.dates.indexOf(dk);
-  let count = 0;
-  if (colIdx >= 0) {
-    for (const person of sheetData.people) {
-      if (!removedNames.has(person.name) && person.values[colIdx] > 0) {
-        count += person.values[colIdx];
-      }
-    }
-  }
-  count += extraPeople.length;
-  return count;
+  return dayPeople[dayOffset] || 0;
+}
+
+function setDayPeople(i, val) {
+  dayPeople[i] = Math.max(0, parseInt(val) || 0);
+  renderSummary();
 }
 
 function renderDays() {
@@ -496,7 +493,7 @@ function renderDays() {
   document.getElementById('daysGrid').innerHTML = ['d0','d1','d2'].map((dk, i) => {
     const date = new Date(base); date.setDate(date.getDate() + i);
     const m = menuData[dk];
-    const pCount = getPeopleCountForDay(i);
+    const pCount = dayPeople[i];
     return `
     <div class="day-card">
       <div class="day-header">
@@ -504,7 +501,11 @@ function renderDays() {
         <span class="day-date">${fmtDate(date)}</span>
         <span class="day-dow">${DOW[date.getDay()]}</span>
       </div>
-      <div style="padding:6px 14px;font-size:0.8rem;color:var(--green);border-bottom:1px solid var(--border)">👥 ${pCount} ${pl(pCount,'человек','человека','человек')}</div>
+      <div style="padding:6px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)">
+        <span style="font-size:0.8rem;color:var(--green)">👥</span>
+        <input type="number" min="0" value="${pCount}" style="width:48px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--accent);font-family:Georgia,serif;font-size:1rem;text-align:center;padding:3px;outline:none;-moz-appearance:textfield" onchange="setDayPeople(${i},this.value)" oninput="setDayPeople(${i},this.value)">
+        <span style="font-size:0.8rem;color:var(--text-dim)">${pl(pCount,'человек','человека','человек')}</span>
+      </div>
       <div class="meal-slots">
         <div><div class="meal-label"><span class="meal-label-dot" style="background:#D4894A"></span>Завтрак</div>
           <select class="meal-select" onchange="setMeal('${dk}','завтрак',this.value)">${makeOpts('Завтраки',m.завтрак)}</select></div>
@@ -531,7 +532,7 @@ function renderSummary() {
   ['d0','d1','d2'].forEach((dk,i) => {
     const date = new Date(base); date.setDate(date.getDate()+i);
     const m = menuData[dk];
-    const pCount = getPeopleCountForDay(i);
+    const pCount = dayPeople[i];
     const slots = [{l:'Завтрак',v:m.завтрак},{l:'Перекус',v:m.перекус},{l:'Суп',v:m.суп},{l:'Салат',v:m.салат},{l:'Ужин',v:m.ужин}];
     const has = slots.some(s=>s.v); if(has) any=true;
     html += `<div class="summary-day"><div class="summary-day-title">${DOW_FULL[date.getDay()]}, ${fmtDate(date)} · ${pCount} чел.</div>`;
