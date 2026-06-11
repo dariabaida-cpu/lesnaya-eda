@@ -154,18 +154,11 @@ header h1 span { color: var(--accent); }
     <button class="btn-sm btn-clear" onclick="clearMenu()">Очистить меню</button>
   </div>
 
-  <div class="people-section" id="peopleSection">
-    <div class="people-header">
-      <span class="people-header-title">👥 Участники</span>
-      <span class="people-count" id="peopleCount">—</span>
-    </div>
-    <div class="people-body">
-      <div class="people-status" id="peopleStatus">Загрузка списка…</div>
-      <div class="people-list" id="peopleList"></div>
-      <div class="add-person">
-        <input type="text" id="addPersonInput" placeholder="Добавить человека" onkeydown="if(event.key==='Enter')addPerson()">
-        <button onclick="addPerson()">Добавить</button>
-      </div>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div id="loadStatus" style="font-size:0.82rem;color:var(--text-dim);font-style:italic"></div>
+    <div class="add-person" style="margin-left:auto">
+      <input type="text" id="addPersonInput" placeholder="Добавить человека" onkeydown="if(event.key==='Enter')addPerson()">
+      <button onclick="addPerson()">Добавить</button>
     </div>
   </div>
 
@@ -340,7 +333,7 @@ function parseCSV(text) {
 }
 
 async function loadPeople() {
-  document.getElementById('peopleStatus').textContent = 'Загрузка из Google Таблицы…';
+  document.getElementById('loadStatus').textContent = 'Загрузка из Google Таблицы…';
   try {
     const resp = await fetch(CSV_URL);
     const text = await resp.text();
@@ -363,10 +356,10 @@ async function loadPeople() {
     }
 
     sheetData = { dates, people };
-    document.getElementById('peopleStatus').textContent = `Загружено ${people.length} участников из таблицы`;
+    document.getElementById('loadStatus').textContent = `Загружено ${people.length} участников из таблицы`;
     updatePeopleForDates();
   } catch (e) {
-    document.getElementById('peopleStatus').textContent = 'Ошибка загрузки. Проверьте интернет и попробуйте «Обновить список».';
+    document.getElementById('loadStatus').textContent = 'Ошибка загрузки. Проверьте интернет и попробуйте «Обновить список».';
   }
 }
 
@@ -376,6 +369,9 @@ function dateToDDMM(dateObj) {
   return dd + '.' + mm;
 }
 
+// Per-day people lists
+let dayPeopleNames = [[], [], []]; // names per day from sheet
+
 function updatePeopleForDates() {
   if (!sheetData) return;
   const base = getStartDate();
@@ -384,39 +380,43 @@ function updatePeopleForDates() {
     return dateToDDMM(d);
   });
 
-  // Find people present on ANY of the 3 days
-  const present = new Set();
   const countPerDay = [0, 0, 0];
+  dayPeopleNames = [[], [], []];
   for (const person of sheetData.people) {
     if (removedNames.has(person.name)) continue;
     for (let di = 0; di < 3; di++) {
       const colIdx = sheetData.dates.indexOf(dateKeys[di]);
       if (colIdx >= 0 && person.values[colIdx] > 0) {
-        present.add(person.name);
+        dayPeopleNames[di].push({name: person.name, count: person.values[colIdx]});
         countPerDay[di] += person.values[colIdx];
       }
     }
   }
   for (let di = 0; di < 3; di++) {
     countPerDay[di] += extraPeople.length;
+    for (const ep of extraPeople) {
+      dayPeopleNames[di].push({name: ep, count: 1, extra: true});
+    }
   }
 
   dayPeople = countPerDay;
-  currentPeople = [...present].filter(n => !removedNames.has(n));
-  renderPeople(countPerDay);
-  renderDays(countPerDay);
+  renderDays();
 }
 
-function renderPeople(countPerDay) {
-  const list = document.getElementById('peopleList');
-  const allPeople = [...currentPeople.map(n => ({name: n, extra: false})), ...extraPeople.map(n => ({name: n, extra: true}))];
-  const total = allPeople.length;
+function getDayPeopleHTML(dayIdx) {
+  const people = dayPeopleNames[dayIdx] || [];
+  if (!people.length) return '<span style="font-size:0.8rem;color:var(--text-dim);font-style:italic">Нет данных</span>';
+  return people.map(p => {
+    const label = p.count > 1 ? `${p.name} (×${p.count})` : p.name;
+    const cls = p.extra ? 'extra' : '';
+    return `<div class="person-tag ${cls}" style="margin:2px 4px 2px 0"><span>${label}</span><span class="person-x" onclick="removePerson('${p.name.replace(/'/g,"\\'")}',${!!p.extra})">✕</span></div>`;
+  }).join('');
+}
 
-  document.getElementById('peopleCount').innerHTML = `${total} <small>${pl(total, 'человек', 'человека', 'человек')}</small>`;
-
-  list.innerHTML = allPeople.map(({name, extra}) =>
-    `<div class="person-tag ${extra?'extra':''}"><span>${name}</span><span class="person-x" onclick="removePerson('${name.replace(/'/g,"\\'")}',${extra})">✕</span></div>`
-  ).join('');
+function toggleDayPeople(i) {
+  const el = document.getElementById('dayPeopleList' + i);
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  if (el.style.display === 'flex') el.style.flexWrap = 'wrap';
 }
 
 function removePerson(name, isExtra) {
@@ -424,22 +424,17 @@ function removePerson(name, isExtra) {
     extraPeople = extraPeople.filter(n => n !== name);
   } else {
     removedNames.add(name);
-    currentPeople = currentPeople.filter(n => n !== name);
   }
-  renderPeople();
-  renderDays();
+  updatePeopleForDates();
 }
 
 function addPerson() {
   const inp = document.getElementById('addPersonInput');
   const name = inp.value.trim();
   if (!name) return;
-  if (!extraPeople.includes(name) && !currentPeople.includes(name)) {
-    extraPeople.push(name);
-  }
+  if (!extraPeople.includes(name)) extraPeople.push(name);
   inp.value = '';
-  renderPeople();
-  renderDays();
+  updatePeopleForDates();
 }
 
 // ============================================================
@@ -505,6 +500,10 @@ function renderDays() {
         <span style="font-size:0.8rem;color:var(--green)">👥</span>
         <input type="number" min="0" value="${pCount}" style="width:52px;background:var(--surface2);border:1px solid var(--accent-dim);border-radius:4px;color:var(--accent);font-family:Georgia,serif;font-size:1.1rem;text-align:center;padding:4px;outline:none;-moz-appearance:textfield" onchange="setDayPeople(${i},this.value)" oninput="setDayPeople(${i},this.value)">
         <span style="font-size:0.8rem;color:var(--text-dim)">чел.</span>
+        <span style="margin-left:auto;font-size:0.75rem;color:var(--accent);cursor:pointer" onclick="toggleDayPeople(${i})">▾ список</span>
+      </div>
+      <div id="dayPeopleList${i}" style="display:none;padding:8px 14px;border-bottom:1px solid var(--border);max-height:160px;overflow-y:auto">
+        ${getDayPeopleHTML(i)}
       </div>
       <div class="meal-slots">
         <div><div class="meal-label"><span class="meal-label-dot" style="background:#D4894A"></span>Завтрак</div>
